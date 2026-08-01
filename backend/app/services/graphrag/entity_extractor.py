@@ -1,7 +1,7 @@
 import re
 from typing import List, Dict, Any
 from app.core.logger import logger
-from app.services.extraction.openrouter_client import OpenRouterClient as ExtractionOpenRouterClient
+from app.services.openrouter_client import OpenRouterClient as ExtractionOpenRouterClient
 
 
 # Common English stop words for heuristic extraction

@@ -11,7 +11,7 @@ from app.schemas.knowledge_extraction import (
     ExtractionPipelineResult,
     ExtractionLLMOutput
 )
-from app.services.extraction.openrouter_client import OpenRouterClient
+from app.services.openrouter_client import OpenRouterClient
 from app.services.extraction.prompt_builder import PromptBuilder
 from app.services.extraction.json_validator import JSONValidator
 from app.services.extraction.entity_resolver import EntityResolver

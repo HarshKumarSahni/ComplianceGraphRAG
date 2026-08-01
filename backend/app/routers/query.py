@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 from app.core.config import get_settings, Settings
 from app.dependencies.clients import Neo4jClient
 from app.repositories.graph_reader_repository import GraphReaderRepository
-from app.services.extraction.openrouter_client import OpenRouterClient
+from app.services.openrouter_client import OpenRouterClient
 from app.services.graphrag.query_engine import GraphRAGQueryEngine
 from app.services.rag_service import GraphRAGService
 from app.schemas.response import ApiResponse

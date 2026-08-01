@@ -96,7 +96,7 @@ export default function SettingsPage() {
               </label>
               <input
                 type="text"
-                defaultValue="openai/gpt-4o-mini"
+                defaultValue="anthropic/claude-sonnet-5"
                 className="w-full h-10 px-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 font-mono text-slate-900 dark:text-slate-100"
               />
             </div>

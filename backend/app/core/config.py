@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     MAX_RETRIES: int = Field(default=3)
 
     # Models
-    OPENROUTER_MODEL: str = Field(default="openai/gpt-4o-mini")
-    EMBEDDING_MODEL: str = Field(default="BAAI/bge-small-en-v1.5")
+    OPENROUTER_PRIMARY_MODEL: str = Field(default="anthropic/claude-sonnet-5")
+    EMBEDDING_MODEL_NAME: str = Field(default="BAAI/bge-small-en-v1.5")
     WHISPER_MODEL: str = Field(default="base")
 
     # Neo4j Settings

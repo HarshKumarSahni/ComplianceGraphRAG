@@ -33,7 +33,7 @@ def settings():
         NEO4J_PASSWORD="",
         NEO4J_DATABASE="neo4j",
         OPENROUTER_API_KEY="",
-        OPENROUTER_MODEL="openai/gpt-4o-mini",
+        OPENROUTER_PRIMARY_MODEL="anthropic/claude-sonnet-5",
         EMBEDDING_MODEL="BAAI/bge-small-en-v1.5",
     )
 

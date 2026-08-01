@@ -99,7 +99,7 @@ NEO4J_DATABASE=neo4j
 
 # OpenRouter LLM
 OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_PRIMARY_MODEL=anthropic/claude-sonnet-5
 
 # Cloudinary CDN
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -107,7 +107,7 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
 # Embedding Model
-EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
+EMBEDDING_MODEL_NAME=BAAI/bge-small-en-v1.5
 ```
 
 ### Frontend Environment Variables (`frontend/.env.local`)

@@ -6,7 +6,7 @@ from app.core.config import Settings
 from app.core.logger import logger
 from app.core.exceptions import GraphRAGRetrievalError, ExternalAPIError, QueryTimeoutError
 from app.repositories.graph_reader_repository import GraphReaderRepository
-from app.services.extraction.openrouter_client import OpenRouterClient
+from app.services.openrouter_client import OpenRouterClient
 from app.services.graphrag.embedding_service import EmbeddingService
 from app.services.graphrag.entity_extractor import EntityExtractor
 from app.services.graphrag.query_prompt_builder import QueryPromptBuilder

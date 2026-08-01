@@ -11,7 +11,7 @@ class EmbeddingService:
     """
 
     def __init__(self, settings: Settings):
-        self.model_name = settings.EMBEDDING_MODEL
+        self.model_name = settings.EMBEDDING_MODEL_NAME
         self._model = None
 
     def _load_model(self):

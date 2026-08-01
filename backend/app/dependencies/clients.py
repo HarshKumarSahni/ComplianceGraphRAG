@@ -86,11 +86,4 @@ class CloudinaryClient:
             return "unconfigured (mock_mode)"
         return "configured"
 
-class OpenRouterClient:
-    def __init__(self, settings: Settings):
-        self.api_key = settings.OPENROUTER_API_KEY
-        self.primary_model = getattr(settings, 'OPENROUTER_PRIMARY_MODEL', None)
-
-    def initialize(self):
-        logger.info(f"Initialized OpenRouter Client wrapper for model: {self.primary_model}")
 

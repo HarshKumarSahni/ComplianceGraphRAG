@@ -1,5 +1,6 @@
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 from typing import Dict, Any, Optional
 from app.core.config import Settings
 from app.core.logger import logger

@@ -1,6 +1,7 @@
 from typing import Generator
 from app.core.config import get_settings, Settings
-from app.dependencies.clients import Neo4jClient, CloudinaryClient, OpenRouterClient
+from app.dependencies.clients import Neo4jClient, CloudinaryClient
+from app.services.openrouter_client import OpenRouterClient
 
 def get_config() -> Settings:
     return get_settings()
@@ -22,6 +23,4 @@ def get_cloudinary_client() -> CloudinaryClient:
 
 def get_openrouter_client() -> OpenRouterClient:
     settings = get_settings()
-    client = OpenRouterClient(settings)
-    client.initialize()
-    return client
+    return OpenRouterClient(settings)
