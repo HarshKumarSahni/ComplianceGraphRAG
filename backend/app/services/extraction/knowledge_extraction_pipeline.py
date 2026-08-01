@@ -1,5 +1,5 @@
 import time
-from typing import List
+from typing import List, Optional
 from app.core.config import Settings
 from app.core.logger import logger
 from app.core.exceptions import BaseAppException
@@ -16,11 +16,22 @@ from app.services.extraction.prompt_builder import PromptBuilder
 from app.services.extraction.json_validator import JSONValidator
 from app.services.extraction.entity_resolver import EntityResolver
 from app.repositories.document_repository import IDocumentRepository
+from app.services.graphrag.embedding_service import EmbeddingService
+from app.repositories.graph_repository import GraphRepository, IGraphRepository
+from app.dependencies.clients import Neo4jClient
 
 class KnowledgeExtractionPipeline:
-    def __init__(self, doc_repo: IDocumentRepository, settings: Settings):
+    def __init__(self, doc_repo: IDocumentRepository, settings: Settings, graph_repo: Optional[IGraphRepository] = None):
         self.doc_repo = doc_repo
+        self.settings = settings
         self.openrouter_client = OpenRouterClient(settings)
+        self.embedding_service = EmbeddingService(settings)
+        if graph_repo:
+            self.graph_repo = graph_repo
+        else:
+            client = Neo4jClient(settings)
+            client.connect()
+            self.graph_repo = GraphRepository(client)
 
     async def process_chunks(self, document_id: str, chunks: List[Chunk]) -> ExtractionPipelineResult:
         start_time = time.time()
@@ -81,7 +92,44 @@ class KnowledgeExtractionPipeline:
                 logger.error(f"Error processing chunk {chunk.chunk_id}: {str(e)}")
                 validation_errors += 1
 
-        # 2. Update Status: READY_FOR_GRAPH_BUILDING
+        # 2. Persist Entities, Edges & Chunks into Neo4j Graph & Vector Store
+        all_nodes = []
+        all_edges = []
+        chunk_data_list = []
+
+        for k_obj in knowledge_objects:
+            for entity in k_obj.entities:
+                all_nodes.append({
+                    "name": entity.name,
+                    "type": entity.type,
+                    "description": entity.description,
+                    "document_id": document_id,
+                })
+            for rel in k_obj.relationships:
+                all_edges.append({
+                    "source_entity": rel.source_entity,
+                    "relationship_type": rel.relationship_type,
+                    "target_entity": rel.target_entity,
+                    "confidence": rel.confidence,
+                    "evidence": rel.evidence,
+                })
+
+        for chunk in chunks:
+            sec_title = chunk.metadata.get("section_title", "") if isinstance(chunk.metadata, dict) else ""
+            chunk_data_list.append({
+                "chunk_id": chunk.chunk_id,
+                "document_id": document_id,
+                "document_name": doc_meta.original_filename,
+                "text": chunk.text,
+                "page_number": chunk.page_number or 1,
+                "section_title": sec_title,
+                "embedding": self.embedding_service.encode(chunk.text)
+            })
+
+        await self.graph_repo.upsert_nodes_and_edges(all_nodes, all_edges)
+        await self.graph_repo.upsert_chunks(chunk_data_list)
+
+        # 3. Update Status: READY_FOR_GRAPH_BUILDING
         doc_meta.status = DocumentStatus.READY_FOR_GRAPH_BUILDING
         doc_meta.entity_count = total_entities
         doc_meta.relation_count = total_relationships

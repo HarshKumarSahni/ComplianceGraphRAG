@@ -59,6 +59,19 @@ class Neo4jClient:
             result = session.run(query, parameters or {})
             return [record.data() for record in result]
 
+    def execute_write(self, query: str, parameters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """Execute a write Cypher query using an explicit write transaction."""
+        if not self._driver:
+            logger.warning("Neo4j driver not initialized. Returning empty result.")
+            return []
+
+        def _write_tx(tx):
+            result = tx.run(query, parameters or {})
+            return [record.data() for record in result]
+
+        with self._driver.session(database=self.database) as session:
+            return session.execute_write(_write_tx)
+
     def execute_read(self, query: str, parameters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Execute a read-only Cypher query using an explicit read transaction."""
         if not self._driver:
