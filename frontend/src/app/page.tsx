@@ -222,7 +222,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <span className="text-slate-400 block">LLM Extractor</span>
-                  <span className="font-semibold text-white">GPT-4o-Mini</span>
+                  <span className="font-semibold text-white">anthropic/claude-sonnet-5</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block">Graph Engine</span>
