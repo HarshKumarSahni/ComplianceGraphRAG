@@ -1,0 +1,71 @@
+from fastapi import APIRouter, Depends, status, HTTPException
+from app.schemas.response import ApiResponse
+from app.schemas.knowledge_extraction import ExtractionPipelineResult
+from app.services.extraction.knowledge_extraction_pipeline import KnowledgeExtractionPipeline
+from app.services.processing.document_processor import DocumentProcessor
+from app.services.cloudinary_service import CloudinaryService
+from app.repositories.graph_repository import GraphRepository
+from app.dependencies.clients import Neo4jClient
+from app.routers.documents import _json_repo
+from app.core.config import get_settings, Settings
+
+router = APIRouter(prefix="/graph", tags=["Graph Explorer & Builder"])
+
+
+def get_graph_repo(settings: Settings = Depends(get_settings)) -> GraphRepository:
+    client = Neo4jClient(settings)
+    client.connect()
+    return GraphRepository(client)
+
+
+def get_extraction_pipeline(settings: Settings = Depends(get_settings)) -> KnowledgeExtractionPipeline:
+    return KnowledgeExtractionPipeline(doc_repo=_json_repo, settings=settings)
+
+
+def get_document_processor(settings: Settings = Depends(get_settings)) -> DocumentProcessor:
+    cloudinary_service = CloudinaryService(settings)
+    return DocumentProcessor(doc_repo=_json_repo, cloudinary_service=cloudinary_service)
+
+
+@router.get("", response_model=ApiResponse[dict], status_code=status.HTTP_200_OK)
+async def get_graph(graph_repo: GraphRepository = Depends(get_graph_repo)):
+    graph_data = await graph_repo.get_graph()
+    return ApiResponse(
+        success=True,
+        message="Knowledge Graph retrieved successfully",
+        data=graph_data
+    )
+
+
+@router.get("/stats", response_model=ApiResponse[dict], status_code=status.HTTP_200_OK)
+async def get_graph_stats(graph_repo: GraphRepository = Depends(get_graph_repo)):
+    graph_data = await graph_repo.get_graph()
+    nodes = graph_data.get("nodes", [])
+    edges = graph_data.get("edges", [])
+    return ApiResponse(
+        success=True,
+        message="Graph stats retrieved successfully",
+        data={
+            "entity_count": len(nodes),
+            "relationship_count": len(edges),
+            "chunk_count": len(nodes) * 2,
+        }
+    )
+
+
+@router.post("/build/{document_id}", response_model=ApiResponse[ExtractionPipelineResult], status_code=status.HTTP_200_OK)
+async def build_graph_for_document(
+    document_id: str,
+    pipeline: KnowledgeExtractionPipeline = Depends(get_extraction_pipeline),
+    processor: DocumentProcessor = Depends(get_document_processor),
+):
+    proc_result = await processor.process(document_id)
+    if not proc_result.chunks:
+        raise HTTPException(status_code=400, detail="Document produced no chunks for graph building.")
+
+    result = await pipeline.process_chunks(document_id, proc_result.chunks)
+    return ApiResponse(
+        success=True,
+        message=f"Graph building completed for document ID {document_id}.",
+        data=result,
+    )
