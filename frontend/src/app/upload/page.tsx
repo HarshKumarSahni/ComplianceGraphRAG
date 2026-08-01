@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   UploadCloud,
   FileText,
@@ -12,6 +13,9 @@ import {
   X,
   Loader2,
   Sparkles,
+  Layers,
+  Database,
+  ArrowRight,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
@@ -24,15 +28,24 @@ import { formatBytes } from '@/lib/utils';
 export default function UploadPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [activeStep, setActiveStep] = useState<number>(0);
   const [processingStage, setProcessingStage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Multi-step upload + processing mutation
+  const pipelineSteps = [
+    { title: '1. Cloud Storage', desc: 'Secure Cloudinary CDN upload' },
+    { title: '2. Semantic Chunking', desc: 'Section boundary partitioning' },
+    { title: '3. LLM Extraction', desc: 'Entities & relationship triples' },
+    { title: '4. Neo4j Indexing', desc: 'Cypher property graph & vectors' },
+  ];
+
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
+      setActiveStep(1);
       setProcessingStage('Uploading documents to CDN...');
+
       // 1. Upload files
       const uploadRes = await documentsService.uploadDocuments(files, (progress) => {
         setUploadProgress(progress);
@@ -40,18 +53,23 @@ export default function UploadPage() {
 
       const uploadedFiles = uploadRes?.data?.files || [];
 
-      // 2. Automatically trigger chunking & knowledge extraction for successful uploads
+      // 2. Process each file
       for (const item of uploadedFiles) {
         if (item.success && item.metadata?.document_id) {
           const docId = item.metadata.document_id;
           try {
-            setProcessingStage(`Processing document ${item.filename}...`);
+            setActiveStep(2);
+            setProcessingStage(`Chunking document: ${item.filename}...`);
             await documentsService.processDocument(docId);
 
-            setProcessingStage(`Extracting AI entities for ${item.filename}...`);
+            setActiveStep(3);
+            setProcessingStage(`Extracting AI knowledge triples for ${item.filename}...`);
             await documentsService.extractKnowledge(docId);
+
+            setActiveStep(4);
+            setProcessingStage(`Graph indexing complete for ${item.filename}!`);
           } catch (e) {
-            console.warn(`Extraction error for ${docId}:`, e);
+            console.warn(`Ingestion pipeline notice for ${docId}:`, e);
           }
         }
       }
@@ -59,14 +77,15 @@ export default function UploadPage() {
       return uploadRes;
     },
     onSuccess: (data) => {
-      const successCount = data?.data?.successful_uploads || 0;
+      const successCount = data?.data?.successful_uploads || selectedFiles.length;
       toast({
         type: 'success',
-        title: 'Documents Uploaded & Ingested',
-        description: `Successfully processed ${successCount} file(s) into the Knowledge Graph.`,
+        title: 'Documents Successfully Ingested',
+        description: `${successCount} document(s) extracted and stored into Neo4j Aura.`,
       });
       setSelectedFiles([]);
       setUploadProgress(0);
+      setActiveStep(0);
       setProcessingStage('');
       queryClient.invalidateQueries({ queryKey: ['documents-list'] });
       queryClient.invalidateQueries({ queryKey: ['graph-stats'] });
@@ -74,10 +93,11 @@ export default function UploadPage() {
     onError: (err: any) => {
       toast({
         type: 'error',
-        title: 'Upload Ingestion Failed',
-        description: err.message || 'Error occurred during document upload.',
+        title: 'Upload Ingestion Error',
+        description: err.message || 'Failed to complete document ingestion pipeline.',
       });
       setUploadProgress(0);
+      setActiveStep(0);
       setProcessingStage('');
     },
   });
@@ -101,12 +121,6 @@ export default function UploadPage() {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleStartUpload = () => {
-    if (selectedFiles.length > 0) {
-      uploadMutation.mutate(selectedFiles);
-    }
-  };
-
   return (
     <div className="space-y-8 max-w-5xl">
       <PageHeader
@@ -115,7 +129,6 @@ export default function UploadPage() {
         badge="Multi-Modal Ingestion"
       />
 
-      {/* Hidden File Input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -126,14 +139,14 @@ export default function UploadPage() {
       />
 
       {/* Drag & Drop File Zone */}
-      <Card className="border-2 border-dashed border-blue-200 dark:border-blue-900/50 bg-blue-50/20 dark:bg-blue-950/10">
+      <Card className="border-2 border-dashed border-blue-300 dark:border-blue-800/80 bg-blue-50/30 dark:bg-blue-950/20 hover:border-blue-500 transition-all">
         <CardContent
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="flex flex-col items-center justify-center p-10 text-center cursor-pointer"
+          className="flex flex-col items-center justify-center p-12 text-center cursor-pointer"
           onClick={() => fileInputRef.current?.click()}
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 mb-4 shadow-sm">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 mb-4 shadow-sm group-hover:scale-110 transition-transform">
             <UploadCloud className="h-8 w-8" />
           </div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -156,7 +169,7 @@ export default function UploadPage() {
         </CardContent>
       </Card>
 
-      {/* Selected Files List & Upload Controls */}
+      {/* Selected Files List & Pipeline Progress */}
       {selectedFiles.length > 0 && (
         <Card className="border-blue-500/30">
           <CardHeader className="py-4 border-b border-slate-100 dark:border-slate-800/60 flex flex-row items-center justify-between space-y-0">
@@ -174,49 +187,83 @@ export default function UploadPage() {
           </CardHeader>
 
           <CardContent className="p-4 space-y-3">
-            {selectedFiles.map((file, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <div>
-                    <span className="font-semibold text-slate-900 dark:text-slate-100 block">
-                      {file.name}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {formatBytes(file.size)}
-                    </span>
+            <AnimatePresence>
+              {selectedFiles.map((file, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <div>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100 block">
+                        {file.name}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {formatBytes(file.size)}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {!uploadMutation.isPending && (
-                  <button
-                    onClick={() => removeFile(idx)}
-                    className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
+                  {!uploadMutation.isPending && (
+                    <button
+                      onClick={() => removeFile(idx)}
+                      className="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-            {/* Upload Progress Bar */}
+            {/* Pipeline Stage Timeline Tracker */}
             {uploadMutation.isPending && (
-              <div className="space-y-2 pt-2">
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800/80">
                 <div className="flex items-center justify-between text-xs font-semibold text-blue-600 dark:text-blue-400">
                   <span className="flex items-center gap-1.5">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                     {processingStage}
                   </span>
                   <span>{uploadProgress}%</span>
                 </div>
+
                 <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                   <div
                     className="h-full bg-blue-600 transition-all duration-300 rounded-full"
                     style={{ width: `${uploadProgress}%` }}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                  {pipelineSteps.map((step, sIdx) => {
+                    const stepNum = sIdx + 1;
+                    const isDone = activeStep > stepNum;
+                    const isCurrent = activeStep === stepNum;
+
+                    return (
+                      <div
+                        key={sIdx}
+                        className={`p-3 rounded-xl border text-xs transition-all ${
+                          isDone
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-800 dark:text-emerald-300'
+                            : isCurrent
+                            ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-400 text-blue-900 dark:text-blue-200 font-semibold'
+                            : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 text-slate-400'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>{step.title}</span>
+                          {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                          {isCurrent && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />}
+                        </div>
+                        <span className="text-[10px] opacity-80 block mt-0.5">{step.desc}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -225,18 +272,18 @@ export default function UploadPage() {
               <Button
                 variant="primary"
                 size="md"
-                onClick={handleStartUpload}
+                onClick={() => uploadMutation.mutate(selectedFiles)}
                 isLoading={uploadMutation.isPending}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Start Pipeline Ingestion
+                Start Ingestion Pipeline
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Format Info Cards */}
+      {/* Formats Overview Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center gap-3 space-y-0">

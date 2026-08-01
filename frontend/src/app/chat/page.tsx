@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send,
   Bot,
@@ -12,17 +13,18 @@ import {
   Network,
   HelpCircle,
   Loader2,
-  FileText,
-  AlertCircle,
+  Copy,
+  Check,
+  RotateCcw,
+  ExternalLink,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import { queryService } from '@/services/query.service';
 import { useToast } from '@/hooks/useToast';
-import { Citation, QueryResponse } from '@/types/query';
+import { QueryResponse } from '@/types/query';
 
 interface ChatMessage {
   id: string;
@@ -34,6 +36,7 @@ interface ChatMessage {
 
 export default function ChatPage() {
   const [question, setQuestion] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'msg-welcome',
@@ -82,7 +85,6 @@ export default function ChatPage() {
     const q = textToSend || question;
     if (!q.trim() || queryMutation.isPending) return;
 
-    // Push user message
     const userMsg: ChatMessage = {
       id: Math.random().toString(36).substring(2, 9),
       sender: 'user',
@@ -92,6 +94,20 @@ export default function ChatPage() {
 
     setMessages((prev) => [...prev, userMsg]);
     queryMutation.mutate(q);
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast({ type: 'info', title: 'Copied to Clipboard', description: 'Answer text copied.' });
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleRegenerate = () => {
+    const lastUserMsg = [...messages].reverse().find((m) => m.sender === 'user');
+    if (lastUserMsg) {
+      queryMutation.mutate(lastUserMsg.text);
+    }
   };
 
   return (
@@ -110,80 +126,118 @@ export default function ChatPage() {
               <Bot className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <CardTitle className="text-base">GraphGuard AI Assistant</CardTitle>
             </div>
-            <Badge variant="success">Grounded Answers</Badge>
+            <div className="flex items-center gap-2">
+              {activeResponse && (
+                <Button variant="outline" size="sm" onClick={handleRegenerate} className="h-7 text-xs">
+                  <RotateCcw className="w-3 h-3 mr-1" />
+                  Regenerate
+                </Button>
+              )}
+              <Badge variant="success">Grounded Answers</Badge>
+            </div>
           </CardHeader>
 
           {/* Chat Messages */}
           <CardContent className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex items-start gap-3 ${
-                  msg.sender === 'user' ? 'flex-row-reverse' : ''
-                }`}
-              >
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-bold shadow-xs ${
-                    msg.sender === 'user'
-                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                      : 'bg-blue-600 text-white'
+            <AnimatePresence>
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className={`flex items-start gap-3 ${
+                    msg.sender === 'user' ? 'flex-row-reverse' : ''
                   }`}
                 >
-                  {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-5 h-5" />}
-                </div>
-
-                <div
-                  className={`flex flex-col gap-1.5 max-w-xl ${
-                    msg.sender === 'user' ? 'items-end' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      {msg.sender === 'user' ? 'You' : 'GraphGuard Assistant'}
-                    </span>
-                    <span className="text-[10px] text-slate-400">{msg.timestamp}</span>
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-bold shadow-xs ${
+                      msg.sender === 'user'
+                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                        : 'bg-blue-600 text-white'
+                    }`}
+                  >
+                    {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-5 h-5" />}
                   </div>
 
                   <div
-                    className={`p-4 rounded-2xl text-sm leading-relaxed ${
-                      msg.sender === 'user'
-                        ? 'bg-blue-600 text-white rounded-tr-none'
-                        : 'bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200/60 dark:border-slate-700/60'
+                    className={`flex flex-col gap-1.5 max-w-xl ${
+                      msg.sender === 'user' ? 'items-end' : ''
                     }`}
                   >
-                    {msg.text}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        {msg.sender === 'user' ? 'You' : 'GraphGuard Assistant'}
+                      </span>
+                      <span className="text-[10px] text-slate-400">{msg.timestamp}</span>
+                    </div>
 
-                    {/* Grounded Response Metadata Badge */}
-                    {msg.response && (
-                      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-500 dark:text-slate-400">Confidence:</span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                            {Math.round(msg.response.confidence * 100)}%
-                          </span>
+                    <div
+                      className={`p-4 rounded-2xl text-sm leading-relaxed relative group ${
+                        msg.sender === 'user'
+                          ? 'bg-blue-600 text-white rounded-tr-none'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200/60 dark:border-slate-700/60'
+                      }`}
+                    >
+                      {msg.text}
+
+                      {/* Copy Action Button */}
+                      {msg.sender === 'assistant' && (
+                        <button
+                          onClick={() => copyToClipboard(msg.text, msg.id)}
+                          className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-slate-900"
+                          title="Copy Answer"
+                        >
+                          {copiedId === msg.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
+
+                      {/* Grounded Response Metadata Badge */}
+                      {msg.response && (
+                        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-500 dark:text-slate-400">Confidence:</span>
+                            <span
+                              className={`font-bold ${
+                                msg.response.confidence > 0.85
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-amber-600 dark:text-amber-400'
+                              }`}
+                            >
+                              {Math.round(msg.response.confidence * 100)}%
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-500">
+                            <BookOpen className="w-3.5 h-3.5" />
+                            <span>{msg.response.citations.length} Citations</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-500">
-                          <BookOpen className="w-3.5 h-3.5" />
-                          <span>{msg.response.citations.length} Citations</span>
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-            {/* Query Processing Spinner */}
+            {/* Query Processing Typing Indicator */}
             {queryMutation.isPending && (
-              <div className="flex items-start gap-3">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-start gap-3"
+              >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-xs">
                   <Bot className="w-5 h-5" />
                 </div>
-                <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/80 text-sm text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/80 text-sm text-slate-600 dark:text-slate-300 flex items-center gap-3">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                  <span>Retrieving vector + graph context from Neo4j...</span>
+                  <span>Searching Neo4j vectors & retrieving Cypher subgraph context...</span>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Prompt Suggestions */}
@@ -293,7 +347,7 @@ export default function ChatPage() {
             <CardHeader className="py-3 border-b border-slate-100 dark:border-slate-800/60">
               <div className="flex items-center gap-2">
                 <Network className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <CardTitle className="text-sm">Retrieved Graph Triples</CardTitle>
+                <CardTitle className="text-sm">Retrieved Subgraph Triples</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-4 text-xs text-slate-500 dark:text-slate-400">
