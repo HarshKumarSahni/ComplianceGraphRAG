@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (resp.success && resp.data) {
         setUser(resp.data.user);
         setToken(resp.data.access_token);
-        router.push('/upload');
+        router.push('/');
       }
     } finally {
       setIsLoading(false);
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (resp.success && resp.data) {
         setUser(resp.data.user);
         setToken(resp.data.access_token);
-        router.push('/upload');
+        router.push('/');
       }
     } finally {
       setIsLoading(false);

@@ -57,13 +57,22 @@ apiClient.interceptors.response.use(
     }
 
     const errorData = error.response?.data;
-    const message =
-      errorData?.message ||
-      (error.code === 'ECONNABORTED'
-        ? 'Request timed out. Please try again.'
-        : !error.response
-        ? 'Backend API server unreachable (http://localhost:8000).'
-        : 'An unexpected error occurred.');
+    let message = errorData?.message;
+    if (!message && errorData?.detail) {
+      if (typeof errorData.detail === 'string') {
+        message = errorData.detail;
+      } else if (Array.isArray(errorData.detail) && errorData.detail.length > 0) {
+        message = errorData.detail.map((d: any) => d.msg || d.message).join('. ');
+      }
+    }
+    if (!message) {
+      message =
+        error.code === 'ECONNABORTED'
+          ? 'Request timed out. Please try again.'
+          : !error.response
+          ? 'Backend API server unreachable.'
+          : 'An unexpected error occurred.';
+    }
 
     return Promise.reject({
       message,
