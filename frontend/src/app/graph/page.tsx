@@ -237,6 +237,21 @@ export default function GraphPage() {
             <div className="flex-1 flex items-center justify-center p-12">
               <Skeleton className="h-full w-full rounded-2xl" />
             </div>
+          ) : rawNodes.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-slate-900/40 rounded-2xl">
+              <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4 shadow-lg shadow-cyan-500/10">
+                <Network className="w-8 h-8 text-cyan-400" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">No Knowledge Graph Data Found</h3>
+              <p className="text-sm text-slate-400 max-w-md mb-6">
+                Upload compliance documents (PDFs, CSVs, Audio) to extract entities, construct governance relationships, and view your custom interactive knowledge graph.
+              </p>
+              <a href="/upload">
+                <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-xl px-6 py-2.5 shadow-lg shadow-cyan-500/20 cursor-pointer">
+                  Upload Documents to Build Graph
+                </Button>
+              </a>
+            </div>
           ) : (
             <div className="flex-1 w-full h-full relative">
               <ReactFlow

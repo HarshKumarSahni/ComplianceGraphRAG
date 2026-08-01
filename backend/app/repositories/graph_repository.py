@@ -119,33 +119,7 @@ class GraphRepository(IGraphRepository):
     async def get_graph(self) -> Dict[str, Any]:
         """Retrieve all entity nodes and relationships for visual graph display."""
         if not getattr(self.client, "_driver", None):
-            return {
-                "nodes": [
-                    {
-                        "id": "node-1",
-                        "label": "GDPR Article 32",
-                        "name": "GDPR Article 32",
-                        "type": "Regulation",
-                        "description": "Technical and organizational security measures requirement."
-                    },
-                    {
-                        "id": "node-2",
-                        "label": "Customer Data Bucket",
-                        "name": "Customer Data Bucket",
-                        "type": "Storage",
-                        "description": "AWS S3 Bucket storing PII customer records."
-                    }
-                ],
-                "edges": [
-                    {
-                        "source": "node-1",
-                        "target": "node-2",
-                        "type": "GOVERNS",
-                        "relationship_type": "GOVERNS",
-                        "confidence": 0.96
-                    }
-                ]
-            }
+            return {"nodes": [], "edges": []}
 
         query = """
         MATCH (n:Entity)
