@@ -14,12 +14,19 @@ from app.middleware.error_handler import (
     generic_exception_handler
 )
 
-from app.routers import health, documents, upload_alias, process, extract, query, graph
+from app.db.database import engine, Base
+from app.models.user import User  # Ensures User model is registered
+from app.routers import health, documents, upload_alias, process, extract, query, graph, auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
     logger.info(f"Starting {settings.PROJECT_NAME} in [{settings.ENVIRONMENT}] mode...")
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables verified/created successfully.")
+    except Exception as e:
+        logger.error(f"Failed to initialize database tables: {e}")
     yield
     logger.info(f"Shutting down {settings.PROJECT_NAME}...")
 
@@ -56,6 +63,7 @@ def create_application() -> FastAPI:
     # 4. Include API Routers
     api_v1_str = settings.API_V1_STR
     app.include_router(health.router, prefix=api_v1_str)
+    app.include_router(auth.router, prefix=api_v1_str)
     app.include_router(documents.router, prefix=api_v1_str)
     app.include_router(upload_alias.router, prefix=api_v1_str)
     app.include_router(process.router, prefix=api_v1_str)

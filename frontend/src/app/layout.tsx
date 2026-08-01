@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     'Multi-modal enterprise compliance Knowledge Graph synthesis and GraphRAG platform.',
 };
 
+import { AuthProvider } from '@/context/auth-context';
+import { AuthGuard } from '@/components/auth-guard';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,9 +35,13 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <QueryProvider>
           <ThemeProvider>
-            <ToastProvider>
-              <DashboardLayout>{children}</DashboardLayout>
-            </ToastProvider>
+            <AuthProvider>
+              <AuthGuard>
+                <ToastProvider>
+                  <DashboardLayout>{children}</DashboardLayout>
+                </ToastProvider>
+              </AuthGuard>
+            </AuthProvider>
           </ThemeProvider>
         </QueryProvider>
       </body>

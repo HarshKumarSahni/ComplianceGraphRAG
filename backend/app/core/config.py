@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = Field(default="")
     CLOUDINARY_API_SECRET: str = Field(default="")
 
+    # Auth & Database Settings
+    JWT_SECRET_KEY: str = Field(default="graphguard_ai_secret_jwt_token_key_2026_secure")
+    JWT_ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=1440)
+    DATABASE_URL: str = Field(default="")
+
     @field_validator("OPENROUTER_API_KEY", "NEO4J_URI", "NEO4J_PASSWORD", "CLOUDINARY_CLOUD_NAME", mode="after")
     def validate_secrets_warning(cls, v, info):
         if not v and info.field_name in ["OPENROUTER_API_KEY", "NEO4J_URI"]:

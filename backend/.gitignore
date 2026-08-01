@@ -30,3 +30,4 @@ __pycache__/
 venv/
 documents_store.json
 test_docs.json
+*.db

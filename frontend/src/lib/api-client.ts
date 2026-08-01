@@ -12,10 +12,16 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor for handling FormData and headers
+// Request interceptor for handling FormData and Auth headers
 apiClient.interceptors.request.use((config) => {
   if (config.data instanceof FormData && config.headers) {
     delete config.headers['Content-Type'];
+  }
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('graphguard_auth_token');
+    if (token && config.headers) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
   }
   return config;
 });
