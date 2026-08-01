@@ -13,6 +13,8 @@ class DocumentMetadata(BaseModel):
     file_type: FileType
     mime_type: str
     status: DocumentStatus = DocumentStatus.UPLOADED
+    entity_count: Optional[int] = 0
+    relation_count: Optional[int] = 0
     error_message: Optional[str] = None
 
 class FileUploadStatus(BaseModel):

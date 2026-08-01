@@ -66,7 +66,6 @@ class DocumentProcessor:
                         },
                     )
 
-                    # Diagnostic logging required for cloud storage debugging
                     logger.info(f"Cloudinary Download Response Status: {resp.status_code}")
                     logger.info(f"Cloudinary Response Headers: {dict(resp.headers)}")
                     if resp.history:
@@ -113,18 +112,25 @@ class DocumentProcessor:
             resource_type=resource_type,
         )
 
-        # 3. Parse File according to format
+        # 3. Parse File into a UnifiedDocument object
         if doc_meta.file_type == FileType.PDF:
-            # extracted_text = self.pdf_parser.parse(file_content)
-            extracted_text = self.pdf_parser.parse(
+            unified_doc: UnifiedDocument = self.pdf_parser.parse(
                 file_content=file_content,
                 document_id=document_id,
                 filename=doc_meta.original_filename,
             )
         elif doc_meta.file_type == FileType.CSV:
-            extracted_text = self.csv_parser.parse(file_content)
+            unified_doc: UnifiedDocument = self.csv_parser.parse(
+                file_content=file_content,
+                document_id=document_id,
+                filename=doc_meta.original_filename,
+            )
         elif doc_meta.file_type == FileType.AUDIO:
-            extracted_text = self.audio_parser.parse(file_content)
+            unified_doc: UnifiedDocument = self.audio_parser.parse(
+                file_content=file_content,
+                document_id=document_id,
+                filename=doc_meta.original_filename,
+            )
         else:
             raise DocumentProcessingError(f"Unsupported file type: {doc_meta.file_type}")
 
@@ -132,14 +138,7 @@ class DocumentProcessor:
         doc_meta.status = DocumentStatus.NORMALIZING
         await self.doc_repo.create_document(doc_meta)
 
-        unified_doc: UnifiedDocument = DocumentNormalizer.normalize(
-            document_id=doc_meta.document_id,
-            original_filename=doc_meta.original_filename,
-            file_type=doc_meta.file_type,
-            raw_text=extracted_text,
-            cloudinary_url=doc_meta.cloudinary_url,
-            public_id=doc_meta.public_id,
-        )
+        unified_doc = DocumentNormalizer.normalize(unified_doc)
 
         # 5. Semantic Chunking
         doc_meta.status = DocumentStatus.CHUNKING
@@ -153,13 +152,16 @@ class DocumentProcessor:
 
         logger.info(
             f"Successfully processed document ID '{document_id}'. "
-            f"Extracted {len(extracted_text)} chars into {len(chunks)} semantic chunks."
+            f"Extracted {len(unified_doc.normalized_text or unified_doc.raw_text)} chars into {len(chunks)} semantic chunks."
         )
 
         return ProcessingResult(
             document_id=document_id,
             status=doc_meta.status,
+            page_count=len(unified_doc.pages) or 1,
             chunk_count=len(chunks),
-            raw_text_length=len(extracted_text),
+            character_count=unified_doc.character_count,
+            estimated_tokens=unified_doc.estimated_tokens,
             chunks=chunks,
+            metadata=unified_doc.metadata,
         )
