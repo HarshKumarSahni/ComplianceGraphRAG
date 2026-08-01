@@ -91,10 +91,34 @@ class OpenRouterClient:
             try:
                 async with httpx.AsyncClient(timeout=float(self.timeout)) as client:
                     resp = await client.post(self.base_url, headers=headers, json=payload)
+                    
+                    if resp.status_code != 200:
+                        logger.error(f"OpenRouter HTTP {resp.status_code} Error: {resp.text[:500]}")
+                    
                     resp.raise_for_status()
                     data = resp.json()
-                    content_str = data["choices"][0]["message"]["content"]
-                    return json.loads(content_str)
+                    
+                    if "choices" not in data or not data["choices"]:
+                        logger.error(f"OpenRouter unexpected response format: {data}")
+                        raise ExternalAPIError(f"OpenRouter invalid response structure: {data}")
+                    
+                    content_str = data["choices"][0]["message"]["content"] or ""
+                    
+                    # Clean markdown code blocks if wrapped (e.g. ```json ... ```)
+                    content_str = content_str.strip()
+                    if content_str.startswith("```"):
+                        lines = content_str.splitlines()
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines and lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        content_str = "\n".join(lines).strip()
+                    
+                    try:
+                        return json.loads(content_str)
+                    except json.JSONDecodeError as json_err:
+                        logger.error(f"Failed to parse LLM JSON response string ({content_str[:200]}): {json_err}")
+                        raise ExternalAPIError(f"LLM output is not valid JSON: {json_err}")
             except Exception as e:
                 logger.warning(f"OpenRouter API request attempt {attempt}/{self.max_retries} failed: {str(e)}")
                 if attempt == self.max_retries:
