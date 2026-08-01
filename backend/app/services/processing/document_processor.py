@@ -115,7 +115,12 @@ class DocumentProcessor:
 
         # 3. Parse File according to format
         if doc_meta.file_type == FileType.PDF:
-            extracted_text = self.pdf_parser.parse(file_content)
+            # extracted_text = self.pdf_parser.parse(file_content)
+            extracted_text = self.pdf_parser.parse(
+                file_content=file_content,
+                document_id=doc_meta.id,
+                filename=doc_meta.original_filename,
+            )
         elif doc_meta.file_type == FileType.CSV:
             extracted_text = self.csv_parser.parse(file_content)
         elif doc_meta.file_type == FileType.AUDIO:
