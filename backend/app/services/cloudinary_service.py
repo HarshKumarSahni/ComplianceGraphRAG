@@ -54,13 +54,21 @@ class CloudinaryService:
             }
 
         try:
+            # response = cloudinary.uploader.upload(
+            #     file_content,
+            #     public_id=f"graphguard/{filename}",
+            #     resource_type=resource_type,
+            #     overwrite=True
+            # )
+            # logger.info(f"Cloudinary upload successful. Public ID: {response.get('public_id')}")
+            # return response
             response = cloudinary.uploader.upload(
                 file_content,
                 public_id=f"graphguard/{filename}",
                 resource_type=resource_type,
                 overwrite=True
             )
-            logger.info(f"Cloudinary upload successful. Public ID: {response.get('public_id')}")
+            logger.info(f"Cloudinary upload response: {response}")
             return response
         except Exception as e:
             logger.error(f"Cloudinary upload failed for {filename}: {str(e)}")

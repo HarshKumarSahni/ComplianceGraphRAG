@@ -211,7 +211,7 @@ export default function DashboardPage() {
                   Multi-Modal Grounded AI Engine Active
                 </h3>
                 <p className="text-xs md:text-sm text-slate-300 max-w-xl leading-relaxed">
-                  FastAPI backend is processing document chunks into vector embeddings (`BAAI/bge-small-en-v1.5`) and extracting Cypher entity relationships via OpenRouter (`openai/gpt-4o-mini`).
+                  FastAPI backend is processing document chunks into vector embeddings (`BAAI/bge-small-en-v1.5`) and extracting Cypher entity relationships via OpenRouter (`anthropic/claude-sonnet-5`).
                 </p>
               </div>
 
