@@ -16,3 +16,13 @@ class GraphDatabaseError(BaseAppException):
 class ExternalAPIError(BaseAppException):
     def __init__(self, message: str, details: dict = None):
         super().__init__(message=message, status_code=502, details=details)
+
+class GraphRAGRetrievalError(BaseAppException):
+    """Raised when graph retrieval yields zero relevant results."""
+    def __init__(self, message: str = "No relevant information found in the knowledge graph.", details: dict = None):
+        super().__init__(message=message, status_code=404, details=details)
+
+class QueryTimeoutError(BaseAppException):
+    """Raised when the total GraphRAG pipeline exceeds the configured timeout."""
+    def __init__(self, message: str = "Query processing exceeded the maximum allowed time.", details: dict = None):
+        super().__init__(message=message, status_code=504, details=details)

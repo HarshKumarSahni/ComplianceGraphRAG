@@ -21,8 +21,20 @@ class FileUploadStatus(BaseModel):
     metadata: Optional[DocumentMetadata] = None
     error: Optional[str] = None
 
+class UploadResponse(BaseModel):
+    document_id: str
+    original_filename: str
+    file_type: FileType
+    status: DocumentStatus
+    cloudinary_url: str
+    upload_timestamp: datetime
+
 class MultiUploadResponse(BaseModel):
     total_files: int
     successful_uploads: int
     failed_uploads: int
     files: List[FileUploadStatus]
+
+class DocumentListResponse(BaseModel):
+    documents: List[DocumentMetadata] = Field(default_factory=list)
+    total: int = 0

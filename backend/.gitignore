@@ -28,3 +28,5 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+documents_store.json
+test_docs.json
