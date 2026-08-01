@@ -30,8 +30,20 @@ import { documentsService } from '@/services/documents.service';
 import { graphService } from '@/services/graph.service';
 import { useHealth } from '@/hooks/useHealth';
 import { formatDate, formatBytes } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function DashboardPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   // Health & Document queries
   const { data: healthData, isLoading: healthLoading } = useHealth();
 
