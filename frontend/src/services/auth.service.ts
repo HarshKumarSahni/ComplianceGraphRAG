@@ -2,7 +2,7 @@ import apiClient from '@/lib/api-client';
 import { ApiResponse } from '@/types/api';
 
 export interface UserProfile {
-  id: str;
+  id: string;
   full_name: string;
   email: string;
   is_active: boolean;
