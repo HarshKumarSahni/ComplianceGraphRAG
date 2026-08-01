@@ -118,7 +118,7 @@ class DocumentProcessor:
             # extracted_text = self.pdf_parser.parse(file_content)
             extracted_text = self.pdf_parser.parse(
                 file_content=file_content,
-                document_id=doc_meta.id,
+                document_id=document_id,
                 filename=doc_meta.original_filename,
             )
         elif doc_meta.file_type == FileType.CSV:
