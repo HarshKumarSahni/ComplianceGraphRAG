@@ -144,7 +144,7 @@ export default function GraphPage() {
   React.useEffect(() => {
     setNodes(reactFlowNodes);
     setEdges(reactFlowEdges);
-  }, [reactFlowNodes, reactFlowEdges, setNodes, setEdges]);
+  }, [graphResponse, searchTerm, setNodes, setEdges]);
 
   const onNodeClick = useCallback((_: any, node: Node) => {
     const raw = (node.data as any).rawNode as GraphNode;

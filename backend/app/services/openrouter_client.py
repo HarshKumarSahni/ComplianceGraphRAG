@@ -33,7 +33,15 @@ class OpenRouterClient:
         Falls back to a deterministic mock response if API key is missing.
         """
         if not self.api_key:
-            logger.info("OpenRouter API key missing. Returning deterministic mock extraction response.")
+            logger.info("OpenRouter API key missing. Operating in deterministic mock LLM mode.")
+            sys_lower = system_prompt.lower()
+            if "graphguard ai" in sys_lower or "cited_chunks" in sys_lower:
+                return {
+                    "answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers (such as AWS S3 buckets) storing personal identifiable information (PII). It mandates encryption at rest and in transit.",
+                    "confidence": 0.95,
+                    "cited_chunks": ["chunk-mock-1"]
+                }
+
             return {
                 "entities": [
                     {

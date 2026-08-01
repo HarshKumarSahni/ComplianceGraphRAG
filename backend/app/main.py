@@ -14,7 +14,7 @@ from app.middleware.error_handler import (
     generic_exception_handler
 )
 
-from app.routers import health, documents, process, extract, query
+from app.routers import health, documents, upload_alias, process, extract, query
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -57,6 +57,7 @@ def create_application() -> FastAPI:
     api_v1_str = settings.API_V1_STR
     app.include_router(health.router, prefix=api_v1_str)
     app.include_router(documents.router, prefix=api_v1_str)
+    app.include_router(upload_alias.router, prefix=api_v1_str)
     app.include_router(process.router, prefix=api_v1_str)
     app.include_router(extract.router, prefix=api_v1_str)
     app.include_router(query.router, prefix=api_v1_str)

@@ -9,10 +9,7 @@ export const uploadService = {
 
     const response = await apiClient.post<ApiResponse<MultiUploadResponse>>(
       '/documents/upload',
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
+      formData
     );
     return response.data;
   },

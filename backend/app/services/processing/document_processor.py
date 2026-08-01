@@ -36,6 +36,10 @@ class DocumentProcessor:
     ) -> bytes:
         if url.startswith("https://res.cloudinary.com/mock-cloud"):
             logger.info("Mock Cloudinary URL detected. Returning sample file content.")
+            if url.endswith(".pdf"):
+                return b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n4 0 obj\n<< /Length 55 >>\nstream\nBT /F1 12 Tf 50 750 Td (Sample Compliance Document) Tj ET\nendstream\nendobj\n5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\nxref\n0 6\n0000000000 65535 f \n0000000010 00000 n \n0000000060 00000 n \n0000000125 00000 n \n0000000260 00000 n \n0000000364 00000 n \ntrailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n443\n%%EOF"
+            if url.endswith(".csv"):
+                return b"Dataset,Department,Classification,Owner\nCustomer_PII_DB,Engineering,Restricted,Jane Doe\nEmployee_Audit_Logs,HR,Internal,John Smith\n"
             return b"Sample Compliance Document Content for testing processing pipeline."
 
         # Build candidate URL list: primary URL ➔ signed URL ➔ private download URL

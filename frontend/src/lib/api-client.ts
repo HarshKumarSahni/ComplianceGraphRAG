@@ -12,6 +12,14 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
+// Request interceptor for handling FormData and headers
+apiClient.interceptors.request.use((config) => {
+  if (config.data instanceof FormData && config.headers) {
+    delete config.headers['Content-Type'];
+  }
+  return config;
+});
+
 // Retry configuration for transient errors
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;

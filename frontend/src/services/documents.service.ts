@@ -27,7 +27,6 @@ export const documentsService = {
       '/documents/upload',
       formData,
       {
-        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
             const percent = Math.round(
