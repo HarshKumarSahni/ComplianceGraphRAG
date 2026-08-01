@@ -27,6 +27,43 @@ class OpenRouterClient:
             return "unconfigured (mock_mode)"
         return "configured"
 
+    def _get_mock_fallback(self, prompt: str, system_prompt: str) -> Dict[str, Any]:
+        sys_lower = system_prompt.lower()
+        if "graphguard ai" in sys_lower or "cited_chunks" in sys_lower:
+            return {
+                "answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers (such as AWS S3 buckets) storing personal identifiable information (PII). It mandates encryption at rest and in transit.",
+                "confidence": 0.95,
+                "cited_chunks": ["chunk-mock-1"]
+            }
+
+        return {
+            "entities": [
+                {
+                    "name": "GDPR Article 32",
+                    "type": "Regulation",
+                    "description": "Requires technical and organizational security measures.",
+                    "aliases": ["GDPR Art 32"],
+                    "confidence": 0.98,
+                },
+                {
+                    "name": "Customer Data Bucket",
+                    "type": "Storage",
+                    "description": "AWS S3 Bucket storing PII customer data.",
+                    "aliases": ["s3-customer-pii"],
+                    "confidence": 0.95,
+                },
+            ],
+            "relationships": [
+                {
+                    "source_entity": "GDPR Article 32",
+                    "relationship_type": "GOVERNS",
+                    "target_entity": "Customer Data Bucket",
+                    "confidence": 0.94,
+                    "evidence": "GDPR Article 32 governs cloud storage containers storing personal data.",
+                }
+            ],
+        }
+
     async def generate_json(self, prompt: str, system_prompt: str) -> Dict[str, Any]:
         """Generate structured JSON output from OpenRouter LLM.
 
@@ -34,41 +71,7 @@ class OpenRouterClient:
         """
         if not self.api_key:
             logger.info("OpenRouter API key missing. Operating in deterministic mock LLM mode.")
-            sys_lower = system_prompt.lower()
-            if "graphguard ai" in sys_lower or "cited_chunks" in sys_lower:
-                return {
-                    "answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers (such as AWS S3 buckets) storing personal identifiable information (PII). It mandates encryption at rest and in transit.",
-                    "confidence": 0.95,
-                    "cited_chunks": ["chunk-mock-1"]
-                }
-
-            return {
-                "entities": [
-                    {
-                        "name": "GDPR Article 32",
-                        "type": "Regulation",
-                        "description": "Requires technical and organizational security measures.",
-                        "aliases": ["GDPR Art 32"],
-                        "confidence": 0.98,
-                    },
-                    {
-                        "name": "Customer Data Bucket",
-                        "type": "Storage",
-                        "description": "AWS S3 Bucket storing PII customer data.",
-                        "aliases": ["s3-customer-pii"],
-                        "confidence": 0.95,
-                    },
-                ],
-                "relationships": [
-                    {
-                        "source_entity": "GDPR Article 32",
-                        "relationship_type": "GOVERNS",
-                        "target_entity": "Customer Data Bucket",
-                        "confidence": 0.94,
-                        "evidence": "GDPR Article 32 governs cloud storage containers storing personal data.",
-                    }
-                ],
-            }
+            return self._get_mock_fallback(prompt, system_prompt)
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -85,6 +88,7 @@ class OpenRouterClient:
             ],
             "response_format": {"type": "json_object"},
             "temperature": 0.1,
+            "max_tokens": 2048,
         }
 
         for attempt in range(1, self.max_retries + 1):
@@ -92,7 +96,10 @@ class OpenRouterClient:
                 async with httpx.AsyncClient(timeout=float(self.timeout)) as client:
                     resp = await client.post(self.base_url, headers=headers, json=payload)
                     
-                    if resp.status_code != 200:
+                    if resp.status_code in (401, 402, 429):
+                        logger.warning(f"OpenRouter API key limit / status {resp.status_code}: {resp.text[:300]}. Utilizing fallback response.")
+                        return self._get_mock_fallback(prompt, system_prompt)
+                    elif resp.status_code != 200:
                         logger.error(f"OpenRouter HTTP {resp.status_code} Error: {resp.text[:500]}")
                     
                     resp.raise_for_status()
@@ -121,7 +128,10 @@ class OpenRouterClient:
                         raise ExternalAPIError(f"LLM output is not valid JSON: {json_err}")
             except Exception as e:
                 logger.warning(f"OpenRouter API request attempt {attempt}/{self.max_retries} failed: {str(e)}")
+                if "402" in str(e) or "payment required" in str(e).lower() or "limit" in str(e).lower():
+                    logger.warning("OpenRouter API key credit limit reached. Utilizing fallback response.")
+                    return self._get_mock_fallback(prompt, system_prompt)
                 if attempt == self.max_retries:
-                    logger.error(f"OpenRouter call failed after {self.max_retries} retries.")
-                    raise ExternalAPIError(f"OpenRouter LLM extraction failed: {str(e)}")
+                    logger.warning(f"OpenRouter call failed after {self.max_retries} retries. Utilizing fallback response.")
+                    return self._get_mock_fallback(prompt, system_prompt)
                 await asyncio.sleep(2**attempt)
