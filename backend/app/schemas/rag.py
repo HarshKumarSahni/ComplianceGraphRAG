@@ -32,7 +32,7 @@ class SubGraphPath(BaseModel):
 class QueryRequest(BaseModel):
     """Incoming compliance question."""
     question: str = Field(..., min_length=3, description="Natural language compliance question")
-    top_k: int = Field(default=5, ge=1, le=20, description="Max chunks/nodes to retrieve")
+    top_k: int = Field(default=3, ge=1, le=20, description="Max chunks/nodes to retrieve")
     filters: Dict[str, Any] = Field(default_factory=dict, description="Optional retrieval filters")
 
 
