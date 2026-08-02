@@ -70,10 +70,11 @@ class GraphRepository(IGraphRepository):
         if nodes:
             cypher_nodes = """
             UNWIND $nodes AS node
-            MERGE (e:Entity {name: node.name})
+            MERGE (e:Entity {name: node.name, user_id: node.user_id})
             SET e.type = COALESCE(node.type, 'Entity'),
                 e.description = COALESCE(node.description, ''),
-                e.document_id = node.document_id
+                e.document_id = node.document_id,
+                e.user_id = node.user_id
             """
             try:
                 self.client.execute_write(cypher_nodes, {"nodes": nodes})
@@ -121,16 +122,14 @@ class GraphRepository(IGraphRepository):
         return True
 
     async def get_graph(self, user_id: str = None) -> Dict[str, Any]:
-        """Retrieve entity nodes and relationships filtered by user_id if provided."""
+        """Retrieve entity nodes and relationships filtered strictly by user_id."""
         if not getattr(self.client, "_driver", None):
             return {"nodes": [], "edges": []}
 
         if user_id:
             query = """
-            MATCH (n:Entity)
-            WHERE n.user_id = $user_id OR n.user_id IS NULL
-            OPTIONAL MATCH (n)-[r]->(m:Entity)
-            WHERE m.user_id = $user_id OR m.user_id IS NULL
+            MATCH (n:Entity {user_id: $user_id})
+            OPTIONAL MATCH (n)-[r]->(m:Entity {user_id: $user_id})
             RETURN n.name AS source_name,
                    n.type AS source_type,
                    n.description AS source_desc,
@@ -202,12 +201,12 @@ class GraphRepository(IGraphRepository):
             return {"nodes": [], "edges": []}
 
     async def clear_graph(self, user_id: str = None) -> bool:
-        """Delete Entity, Chunk nodes and relationships from Neo4j (filtered by user_id if provided)."""
+        """Delete Entity/Chunk nodes for a specific user from Neo4j."""
         if not getattr(self.client, "_driver", None):
             return True
 
         if user_id:
-            query = "MATCH (n) WHERE n.user_id = $user_id OR n.user_id IS NULL DETACH DELETE n"
+            query = "MATCH (n:Entity {user_id: $user_id}) DETACH DELETE n"
             params = {"user_id": user_id}
         else:
             query = "MATCH (n) DETACH DELETE n"

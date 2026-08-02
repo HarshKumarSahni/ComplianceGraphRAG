@@ -33,7 +33,7 @@ class KnowledgeExtractionPipeline:
             client.connect()
             self.graph_repo = GraphRepository(client)
 
-    async def process_chunks(self, document_id: str, chunks: List[Chunk]) -> ExtractionPipelineResult:
+    async def process_chunks(self, document_id: str, chunks: List[Chunk], user_id: str = None) -> ExtractionPipelineResult:
         start_time = time.time()
         doc_meta = await self.doc_repo.get_document_by_id(document_id)
         if not doc_meta:
@@ -104,6 +104,7 @@ class KnowledgeExtractionPipeline:
                     "type": entity.type,
                     "description": entity.description,
                     "document_id": document_id,
+                    "user_id": user_id or "anonymous",
                 })
             for rel in k_obj.relationships:
                 all_edges.append({
