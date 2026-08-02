@@ -56,10 +56,12 @@ export default function GraphPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Fetch Graph Data
+  // Fetch Graph Data — always re-fetch on mount, no stale data from previous user
   const { data: graphResponse, isLoading, refetch } = useQuery({
     queryKey: ['graph-data'],
     queryFn: () => graphService.getGraph(),
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   const clearGraphMutation = useMutation({
@@ -82,8 +84,9 @@ export default function GraphPage() {
     },
   });
 
-  const rawNodes: GraphNode[] = graphResponse?.data?.nodes || [];
-  const rawEdges: GraphEdge[] = graphResponse?.data?.edges || [];
+  // Strict empty arrays — never use sample/fallback data
+  const rawNodes: GraphNode[] = graphResponse?.data?.nodes ?? [];
+  const rawEdges: GraphEdge[] = graphResponse?.data?.edges ?? [];
 
   // Filter nodes by search term
   const filteredNodes = useMemo(() => {

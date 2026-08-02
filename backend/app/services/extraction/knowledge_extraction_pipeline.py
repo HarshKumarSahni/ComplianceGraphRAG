@@ -34,6 +34,8 @@ class KnowledgeExtractionPipeline:
             self.graph_repo = GraphRepository(client)
 
     async def process_chunks(self, document_id: str, chunks: List[Chunk], user_id: str = None) -> ExtractionPipelineResult:
+        if not user_id:
+            raise ValueError("user_id is required for knowledge extraction. Never extract without an authenticated user.")
         start_time = time.time()
         doc_meta = await self.doc_repo.get_document_by_id(document_id)
         if not doc_meta:
@@ -113,6 +115,7 @@ class KnowledgeExtractionPipeline:
                     "target_entity": rel.target_entity,
                     "confidence": rel.confidence,
                     "evidence": rel.evidence,
+                    "user_id": user_id,
                 })
 
         for chunk in chunks:
@@ -124,7 +127,8 @@ class KnowledgeExtractionPipeline:
                 "text": chunk.text,
                 "page_number": chunk.page_number or 1,
                 "section_title": sec_title,
-                "embedding": self.embedding_service.encode(chunk.text)
+                "embedding": self.embedding_service.encode(chunk.text),
+                "user_id": user_id,
             })
 
         await self.graph_repo.upsert_nodes_and_edges(all_nodes, all_edges)

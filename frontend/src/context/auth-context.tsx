@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { authService, UserProfile } from '@/services/auth.service';
 
 interface AuthContextType {
@@ -21,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const loadUser = useCallback(async () => {
     const storedToken = authService.getToken();
@@ -59,6 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const resp = await authService.login(email, password);
       if (resp.success && resp.data) {
+        // Clear ALL cached query data from previous session before setting new user
+        queryClient.clear();
         setUser(resp.data.user);
         setToken(resp.data.access_token);
         router.push('/upload');
@@ -73,6 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const resp = await authService.signup(full_name, email, password);
       if (resp.success && resp.data) {
+        // Clear ALL cached query data before new session
+        queryClient.clear();
         setUser(resp.data.user);
         setToken(resp.data.access_token);
         router.push('/upload');
@@ -84,6 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     authService.logout();
+    // Clear ALL React Query cache — never show previous user's data
+    queryClient.clear();
     setUser(null);
     setToken(null);
     router.push('/login');

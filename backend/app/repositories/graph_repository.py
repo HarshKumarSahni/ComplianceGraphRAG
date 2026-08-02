@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.core.logger import logger
 
 
@@ -17,11 +17,15 @@ class IGraphRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_graph(self) -> Dict[str, Any]:
+    async def get_graph(self, user_id: str) -> Dict[str, Any]:
         pass
 
     @abstractmethod
-    async def clear_graph(self) -> bool:
+    async def get_chunk_count(self, user_id: str) -> int:
+        pass
+
+    @abstractmethod
+    async def clear_graph(self, user_id: str) -> bool:
         pass
 
 
@@ -30,13 +34,17 @@ class GraphRepository(IGraphRepository):
         self.client = neo4j_client
 
     async def ensure_indexes(self) -> bool:
-        """Create constraints and vector indexes in Neo4j if driver is active."""
+        """Create composite constraints and vector indexes in Neo4j if driver is active."""
         if not getattr(self.client, "_driver", None):
             return False
 
         cypher_statements = [
-            "CREATE CONSTRAINT entity_name_unique IF NOT EXISTS FOR (e:Entity) REQUIRE e.name IS UNIQUE",
-            "CREATE CONSTRAINT chunk_id_unique IF NOT EXISTS FOR (c:Chunk) REQUIRE c.chunk_id IS UNIQUE",
+            # Drop the old global uniqueness constraint if it still exists
+            "DROP CONSTRAINT entity_name_unique IF EXISTS",
+            # Composite uniqueness: one entity name per user
+            "CREATE CONSTRAINT entity_user_name_unique IF NOT EXISTS FOR (e:Entity) REQUIRE (e.user_id, e.name) IS UNIQUE",
+            # Chunk uniqueness scoped to user
+            "CREATE CONSTRAINT chunk_user_id_unique IF NOT EXISTS FOR (c:Chunk) REQUIRE (c.user_id, c.chunk_id) IS UNIQUE",
             """
             CREATE VECTOR INDEX entity_embedding_index IF NOT EXISTS
             FOR (e:Entity) ON (e.embedding)
@@ -53,12 +61,12 @@ class GraphRepository(IGraphRepository):
             try:
                 self.client.execute_write(stmt)
             except Exception as e:
-                logger.warning(f"Neo4j schema index init statement ({stmt[:50]}...): {e}")
+                logger.warning(f"Neo4j schema index init statement ({stmt[:60]}...): {e}")
 
         return True
 
     async def upsert_nodes_and_edges(self, nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> bool:
-        """Upsert extracted entity nodes and relationship edges into Neo4j."""
+        """Upsert extracted entity nodes and relationship edges into Neo4j, strictly scoped by user_id."""
         if not getattr(self.client, "_driver", None):
             logger.info("Neo4j driver inactive (mock mode). Skipping physical Cypher writes.")
             return True
@@ -66,101 +74,83 @@ class GraphRepository(IGraphRepository):
         # 1. Ensure schema indexes
         await self.ensure_indexes()
 
-        # 2. Upsert Entity Nodes
+        # 2. Upsert Entity Nodes — composite key (user_id, name)
         if nodes:
             cypher_nodes = """
             UNWIND $nodes AS node
-            MERGE (e:Entity {name: node.name, user_id: node.user_id})
+            MERGE (e:Entity {user_id: node.user_id, name: node.name})
             SET e.type = COALESCE(node.type, 'Entity'),
                 e.description = COALESCE(node.description, ''),
                 e.document_id = node.document_id,
                 e.user_id = node.user_id
             """
-            try:
-                self.client.execute_write(cypher_nodes, {"nodes": nodes})
-            except Exception as e:
-                logger.error(f"Failed to upsert Entity nodes to Neo4j: {e}")
+            # Fail loudly — do NOT catch and return True
+            self.client.execute_write(cypher_nodes, {"nodes": nodes})
+            logger.info(f"Upserted {len(nodes)} entity nodes for user {nodes[0].get('user_id')}")
 
-        # 3. Upsert Relationships
+        # 3. Upsert Relationships — match source and target by BOTH name AND user_id
+        #    Use the extracted relationship_type as the relationship label via APOC-style workaround.
+        #    Since Neo4j requires static relationship type labels in Cypher, we store the type as a
+        #    property and use a universal :RELATES_TO label, then expose relationship_type to frontend.
         if edges:
-            cypher_edges_standard = """
+            cypher_edges = """
             UNWIND $edges AS rel
-            MATCH (source:Entity {name: rel.source_entity})
-            MATCH (target:Entity {name: rel.target_entity})
-            MERGE (source)-[r:GOVERNS]->(target)
+            MATCH (source:Entity {user_id: rel.user_id, name: rel.source_entity})
+            MATCH (target:Entity {user_id: rel.user_id, name: rel.target_entity})
+            MERGE (source)-[r:RELATES_TO {relationship_type: rel.relationship_type, user_id: rel.user_id}]->(target)
             SET r.confidence = rel.confidence,
                 r.evidence = rel.evidence,
-                r.relationship_type = rel.relationship_type
+                r.relationship_type = rel.relationship_type,
+                r.user_id = rel.user_id
             """
-            try:
-                self.client.execute_write(cypher_edges_standard, {"edges": edges})
-            except Exception as e:
-                logger.error(f"Failed to upsert relationships to Neo4j: {e}")
+            # Fail loudly — do NOT catch and return True
+            self.client.execute_write(cypher_edges, {"edges": edges})
+            logger.info(f"Upserted {len(edges)} relationships for user {edges[0].get('user_id')}")
 
         return True
 
     async def upsert_chunks(self, chunks: List[Dict[str, Any]]) -> bool:
-        """Upsert document text chunks with vectors into Neo4j."""
+        """Upsert document text chunks with vectors into Neo4j, scoped by user_id."""
         if not getattr(self.client, "_driver", None) or not chunks:
             return True
 
         cypher_chunks = """
         UNWIND $chunks AS chunk
-        MERGE (c:Chunk {chunk_id: chunk.chunk_id})
+        MERGE (c:Chunk {user_id: chunk.user_id, chunk_id: chunk.chunk_id})
         SET c.document_id = chunk.document_id,
             c.document_name = chunk.document_name,
             c.text = chunk.text,
             c.page_number = chunk.page_number,
             c.section_title = chunk.section_title,
-            c.embedding = chunk.embedding
+            c.embedding = chunk.embedding,
+            c.user_id = chunk.user_id
         """
-        try:
-            self.client.execute_write(cypher_chunks, {"chunks": chunks})
-        except Exception as e:
-            logger.error(f"Failed to upsert Chunk nodes to Neo4j: {e}")
-
+        # Fail loudly — do NOT catch and return True
+        self.client.execute_write(cypher_chunks, {"chunks": chunks})
+        logger.info(f"Upserted {len(chunks)} chunk nodes for user {chunks[0].get('user_id')}")
         return True
 
-    async def get_graph(self, user_id: str = None) -> Dict[str, Any]:
-        """Retrieve entity nodes and relationships filtered strictly by user_id."""
+    async def get_graph(self, user_id: str) -> Dict[str, Any]:
+        """Retrieve ONLY entity nodes and relationships belonging to user_id. No fallback to other users."""
         if not getattr(self.client, "_driver", None):
             return {"nodes": [], "edges": []}
 
-        if user_id:
-            query = """
-            MATCH (n:Entity)
-            WHERE n.user_id = $user_id OR n.user_id = 'anonymous' OR n.user_id IS NULL
-            OPTIONAL MATCH (n)-[r]->(m:Entity)
-            WHERE m.user_id = $user_id OR m.user_id = 'anonymous' OR m.user_id IS NULL
-            RETURN n.name AS source_name,
-                   n.type AS source_type,
-                   n.description AS source_desc,
-                   m.name AS target_name,
-                   m.type AS target_type,
-                   m.description AS target_desc,
-                   type(r) AS rel_type,
-                   r.confidence AS confidence
-            LIMIT 200
-            """
-            params = {"user_id": user_id}
-        else:
-            query = """
-            MATCH (n:Entity)
-            OPTIONAL MATCH (n)-[r]->(m:Entity)
-            RETURN n.name AS source_name,
-                   n.type AS source_type,
-                   n.description AS source_desc,
-                   m.name AS target_name,
-                   m.type AS target_type,
-                   m.description AS target_desc,
-                   type(r) AS rel_type,
-                   r.confidence AS confidence
-            LIMIT 200
-            """
-            params = {}
-
+        # Strict filter: user_id ONLY — no IS NULL, no 'anonymous' fallback
+        query = """
+        MATCH (n:Entity {user_id: $user_id})
+        OPTIONAL MATCH (n)-[r:RELATES_TO {user_id: $user_id}]->(m:Entity {user_id: $user_id})
+        RETURN n.name AS source_name,
+               n.type AS source_type,
+               n.description AS source_desc,
+               m.name AS target_name,
+               m.type AS target_type,
+               m.description AS target_desc,
+               r.relationship_type AS rel_label,
+               r.confidence AS confidence
+        LIMIT 500
+        """
         try:
-            records = self.client.execute_read(query, params)
+            records = self.client.execute_read(query, {"user_id": user_id})
             nodes_dict = {}
             edges_list = []
 
@@ -185,12 +175,12 @@ class GraphRepository(IGraphRepository):
                         "description": row.get("target_desc") or ""
                     }
 
-                if s_name and t_name and row.get("rel_type"):
+                if s_name and t_name and row.get("rel_label"):
                     edges_list.append({
                         "source": s_name,
                         "target": t_name,
-                        "type": row.get("rel_type"),
-                        "relationship_type": row.get("rel_type"),
+                        "type": row.get("rel_label"),
+                        "relationship_type": row.get("rel_label"),
                         "confidence": row.get("confidence") or 0.9
                     })
 
@@ -202,22 +192,36 @@ class GraphRepository(IGraphRepository):
             logger.error(f"Failed to fetch graph from Neo4j: {e}")
             return {"nodes": [], "edges": []}
 
-    async def clear_graph(self, user_id: str = None) -> bool:
-        """Delete Entity/Chunk nodes for a specific user from Neo4j."""
+    async def get_chunk_count(self, user_id: str) -> int:
+        """Return the actual count of Chunk nodes belonging to this user."""
+        if not getattr(self.client, "_driver", None):
+            return 0
+        try:
+            query = "MATCH (c:Chunk {user_id: $user_id}) RETURN count(c) AS cnt"
+            records = self.client.execute_read(query, {"user_id": user_id})
+            return records[0].get("cnt", 0) if records else 0
+        except Exception as e:
+            logger.error(f"Failed to get chunk count: {e}")
+            return 0
+
+    async def clear_graph(self, user_id: str) -> bool:
+        """Delete ONLY this user's Entity AND Chunk nodes (with all their relationships)."""
         if not getattr(self.client, "_driver", None):
             return True
 
-        if user_id:
-            query = "MATCH (n:Entity {user_id: $user_id}) DETACH DELETE n"
-            params = {"user_id": user_id}
-        else:
-            query = "MATCH (n) DETACH DELETE n"
-            params = {}
-
         try:
-            self.client.execute_write(query, params)
-            logger.info("Cleared nodes and relationships from Neo4j Knowledge Graph.")
+            # Delete Entity nodes (DETACH removes their relationships too)
+            self.client.execute_write(
+                "MATCH (n:Entity {user_id: $user_id}) DETACH DELETE n",
+                {"user_id": user_id}
+            )
+            # Delete Chunk nodes
+            self.client.execute_write(
+                "MATCH (c:Chunk {user_id: $user_id}) DETACH DELETE c",
+                {"user_id": user_id}
+            )
+            logger.info(f"Cleared graph and chunks for user {user_id}")
             return True
         except Exception as e:
-            logger.error(f"Failed to clear Neo4j graph: {e}")
+            logger.error(f"Failed to clear Neo4j graph for user {user_id}: {e}")
             return False

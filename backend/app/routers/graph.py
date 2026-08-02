@@ -47,16 +47,18 @@ async def get_graph_stats(
     graph_repo: GraphRepository = Depends(get_graph_repo),
     current_user: User = Depends(get_current_user),
 ):
-    graph_data = await graph_repo.get_graph(user_id=str(current_user.id))
+    user_id = str(current_user.id)
+    graph_data = await graph_repo.get_graph(user_id=user_id)
     nodes = graph_data.get("nodes", [])
     edges = graph_data.get("edges", [])
+    chunk_count = await graph_repo.get_chunk_count(user_id=user_id)
     return ApiResponse(
         success=True,
         message="Graph stats retrieved successfully",
         data={
             "entity_count": len(nodes),
             "relationship_count": len(edges),
-            "chunk_count": len(nodes) * 2,
+            "chunk_count": chunk_count,
         }
     )
 
