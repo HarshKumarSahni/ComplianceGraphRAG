@@ -1,0 +1,21 @@
+{
+  "relationships": [
+    { "source": "Support CRM", "relationship_type": "STORES", "target": "Customer PII" },
+    { "source": "Support CRM", "relationship_type": "OWNED_BY", "target": "Customer Operations Team" },
+    { "source": "Support CRM", "relationship_type": "VIOLATES", "target": "ENC-01" },
+    { "source": "Analytics Warehouse", "relationship_type": "STORES", "target": "Customer PII" },
+    { "source": "Analytics Warehouse", "relationship_type": "STORES", "target": "Transaction Data" },
+    { "source": "Analytics Warehouse", "relationship_type": "OWNED_BY", "target": "Data Engineering Team" },
+    { "source": "Analytics Warehouse", "relationship_type": "VIOLATES", "target": "MFA-01" },
+    { "source": "Analytics Warehouse", "relationship_type": "VIOLATES", "target": "RBAC-02" },
+    { "source": "Payment Gateway", "relationship_type": "STORES", "target": "Payment Card Data" },
+    { "source": "Payment Gateway", "relationship_type": "OWNED_BY", "target": "Platform Team" },
+    { "source": "Payment Gateway", "relationship_type": "COMPLIES_WITH", "target": "ENC-01" },
+    { "source": "Payment Gateway", "relationship_type": "COMPLIES_WITH", "target": "MFA-01" },
+    { "source": "File Transfer Service", "relationship_type": "STORES", "target": "Customer PII" },
+    { "source": "File Transfer Service", "relationship_type": "VIOLATES", "target": "ENC-01" },
+    { "source": "Security Team", "relationship_type": "OWNS_CONTROL", "target": "ENC-01" },
+    { "source": "Customer PII", "relationship_type": "REQUIRES", "target": "ENC-01" },
+    { "source": "Sensitive Systems", "relationship_type": "REQUIRE", "target": "MFA-01" }
+  ]
+}

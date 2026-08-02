@@ -1,0 +1,122 @@
+[
+  {
+    "id": "Q1",
+    "question": "Which system has encryption at rest disabled according to the system inventory?",
+    "expected_keywords": ["Support CRM", "File Transfer Service"],
+    "expected_sources": ["03_System_Inventory.csv", "01_Data_Protection_Policy.pdf", "04_Audit_Findings.csv"],
+    "expected_answer": "Support CRM and File Transfer Service have encryption at rest disabled.",
+    "answerable": true
+  },
+  {
+    "id": "Q2",
+    "question": "Who owns the Support CRM?",
+    "expected_keywords": ["Customer Operations Team"],
+    "expected_sources": ["03_System_Inventory.csv", "02_Access_Control_Policy.pdf"],
+    "expected_answer": "Customer Operations Team",
+    "answerable": true
+  },
+  {
+    "id": "Q3",
+    "question": "Which team owns the Analytics Warehouse?",
+    "expected_keywords": ["Data Engineering Team"],
+    "expected_sources": ["03_System_Inventory.csv"],
+    "expected_answer": "Data Engineering Team",
+    "answerable": true
+  },
+  {
+    "id": "Q4",
+    "question": "Which control requires encryption at rest for Customer PII?",
+    "expected_keywords": ["ENC-01"],
+    "expected_sources": ["01_Data_Protection_Policy.pdf"],
+    "expected_answer": "ENC-01",
+    "answerable": true
+  },
+  {
+    "id": "Q5",
+    "question": "Which control requires multi-factor authentication for sensitive systems?",
+    "expected_keywords": ["MFA-01"],
+    "expected_sources": ["02_Access_Control_Policy.pdf"],
+    "expected_answer": "MFA-01",
+    "answerable": true
+  },
+  {
+    "id": "Q6",
+    "question": "What type of data does the Payment Gateway process?",
+    "expected_keywords": ["Payment Card Data"],
+    "expected_sources": ["03_System_Inventory.csv", "01_Data_Protection_Policy.pdf"],
+    "expected_answer": "Payment Card Data",
+    "answerable": true
+  },
+  {
+    "id": "Q7",
+    "question": "What is the severity of the Support CRM encryption finding?",
+    "expected_keywords": ["High"],
+    "expected_sources": ["04_Audit_Findings.csv"],
+    "expected_answer": "High",
+    "answerable": true
+  },
+  {
+    "id": "Q8",
+    "question": "When is the Analytics Warehouse MFA remediation due?",
+    "expected_keywords": ["August 8, 2026", "2026-08-08"],
+    "expected_sources": ["04_Audit_Findings.csv", "06_Audit_Remediation_Meeting.mp3"],
+    "expected_answer": "August 8, 2026",
+    "answerable": true
+  },
+  {
+    "id": "Q9",
+    "question": "Which system stores Customer PII and currently violates ENC-01?",
+    "expected_keywords": ["Support CRM"],
+    "expected_sources": ["03_System_Inventory.csv", "04_Audit_Findings.csv", "01_Data_Protection_Policy.pdf"],
+    "expected_answer": "Support CRM",
+    "answerable": true
+  },
+  {
+    "id": "Q10",
+    "question": "Which high-risk system is encrypted at rest but does not have MFA enabled?",
+    "expected_keywords": ["Analytics Warehouse"],
+    "expected_sources": ["03_System_Inventory.csv", "04_Audit_Findings.csv", "02_Access_Control_Policy.pdf"],
+    "expected_answer": "Analytics Warehouse",
+    "answerable": true
+  },
+  {
+    "id": "Q11",
+    "question": "Which team is responsible for fixing the Support CRM encryption issue?",
+    "expected_keywords": ["Customer Operations Team"],
+    "expected_sources": ["03_System_Inventory.csv", "04_Audit_Findings.csv", "06_Audit_Remediation_Meeting.mp3"],
+    "expected_answer": "Customer Operations Team",
+    "answerable": true
+  },
+  {
+    "id": "Q12",
+    "question": "Who is the CEO of Northstar Digital Services?",
+    "expected_keywords": [],
+    "expected_sources": [],
+    "expected_answer": "NOT_FOUND",
+    "answerable": false
+  },
+  {
+    "id": "Q13",
+    "question": "What is the annual revenue of Northstar Digital Services?",
+    "expected_keywords": [],
+    "expected_sources": [],
+    "expected_answer": "NOT_FOUND",
+    "answerable": false
+  },
+  {
+    "id": "Q14",
+    "question": "Where is the company headquarters located?",
+    "expected_keywords": [],
+    "expected_sources": [],
+    "expected_answer": "NOT_FOUND",
+    "answerable": false
+  },
+  {
+    "id": "Q15",
+    "question": "What is the CEO's phone number?",
+    "expected_keywords": [],
+    "expected_sources": [],
+    "expected_answer": "NOT_FOUND",
+    "answerable": false
+  }
+]
