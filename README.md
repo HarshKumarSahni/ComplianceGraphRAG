@@ -7,7 +7,18 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 > **GraphGuard AI** is a production-grade enterprise platform that synthesizes heterogeneous compliance documents—**PDF policies, CSV asset inventories, and MP3 audit recordings**—into a unified, queryable **Neo4j Knowledge Graph**. It enables grounded, natural language compliance query answering powered by **GraphRAG** with strict citation traceability and zero hallucination.
+---
 
+## 🚀 Key Features
+
+- **Multi-Modal Document Processing**: Ingests PDFs, CSVs, and MP3 audio files with automated text extraction and speech transcription.
+- **Multi-Document Graph Merging**: Cross-document entity deduplication connects nodes across multiple uploaded files into one unified enterprise compliance graph.
+- **Strict Grounded Extraction**: No hallucinated entities; every node and edge is linked back to verbatim document chunks.
+- **Interactive 2D Graph Explorer**: Built with ReactFlow (`@xyflow/react`) featuring dynamic 2D grid spacing (prevents node overlap), live **Node Dropdown**, and **Relationship Dropdown** controls.
+- **Natural Language GraphRAG**: Answers complex compliance questions with verbatim document snippet citations, confidence scores, and subgraph paths.
+- **Strict Hallucination Containment**: Out-of-domain or unsupported queries trigger immediate refusal instead of making up answers.
+- **Modern Next.js 16 UI**: Light / Dark mode toggle built with Tailwind CSS v4, live document management, and real-time query streaming.
+- **Private Evaluation Suite**: Standalone automated evaluation scripts for calculating standard GraphRAG metrics against ground-truth datasets without LLM-as-judge overhead.
 ---
 
 ## 📊 Evaluation & Benchmark Performance
@@ -76,19 +87,6 @@ GraphGuard AI was benchmarked against the gold-standard compliance dataset using
   │        Top-3 Chunk Retrieval ➔ Grounded LLM Prompt ➔ Verbatim Citations     │
   └──────────────────────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## 🚀 Key Features
-
-- **Multi-Modal Document Processing**: Ingests PDFs, CSVs, and MP3 audio files with automated text extraction and speech transcription.
-- **Multi-Document Graph Merging**: Cross-document entity deduplication connects nodes across multiple uploaded files into one unified enterprise compliance graph.
-- **Strict Grounded Extraction**: No hallucinated entities; every node and edge is linked back to verbatim document chunks.
-- **Interactive 2D Graph Explorer**: Built with ReactFlow (`@xyflow/react`) featuring dynamic 2D grid spacing (prevents node overlap), live **Node Dropdown**, and **Relationship Dropdown** controls.
-- **Natural Language GraphRAG**: Answers complex compliance questions with verbatim document snippet citations, confidence scores, and subgraph paths.
-- **Strict Hallucination Containment**: Out-of-domain or unsupported queries trigger immediate refusal instead of making up answers.
-- **Modern Next.js 16 UI**: Light / Dark mode toggle built with Tailwind CSS v4, live document management, and real-time query streaming.
-- **Private Evaluation Suite**: Standalone automated evaluation scripts for calculating standard GraphRAG metrics against ground-truth datasets without LLM-as-judge overhead.
 
 ---
 
