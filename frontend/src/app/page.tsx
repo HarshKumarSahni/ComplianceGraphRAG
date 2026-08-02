@@ -7,29 +7,20 @@ import { motion } from 'framer-motion';
 import {
   FileText,
   Network,
-  MessageSquare,
   UploadCloud,
-  ShieldCheck,
   TrendingUp,
   Database,
-  ArrowRight,
   RefreshCw,
-  Cpu,
-  Zap,
   Activity,
-  CheckCircle2,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Skeleton } from '@/components/ui/Loader';
 import { documentsService } from '@/services/documents.service';
 import { graphService } from '@/services/graph.service';
 import { useHealth } from '@/hooks/useHealth';
-import { formatDate, formatBytes } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -112,33 +103,6 @@ export default function DashboardPage() {
       icon: Database,
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-950/60 border-amber-200/60 dark:border-amber-900/50',
-    },
-  ];
-
-  const quickActions = [
-    {
-      title: 'Upload Documents',
-      description: 'Ingest PDF policies, CSV datasets, or audio transcripts into the graph.',
-      href: '/upload',
-      icon: UploadCloud,
-      buttonText: 'Start Upload',
-      gradient: 'from-blue-600/10 to-indigo-600/10',
-    },
-    {
-      title: 'Ask Compliance Assistant',
-      description: 'Query the knowledge graph with natural language for grounded answers.',
-      href: '/chat',
-      icon: MessageSquare,
-      buttonText: 'Open Chat',
-      gradient: 'from-indigo-600/10 to-purple-600/10',
-    },
-    {
-      title: 'Explore Knowledge Graph',
-      description: 'Visualize policy connections, entity relationships, and risk nodes.',
-      href: '/graph',
-      icon: Network,
-      buttonText: 'View Graph',
-      gradient: 'from-purple-600/10 to-emerald-600/10',
     },
   ];
 
