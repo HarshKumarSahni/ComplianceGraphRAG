@@ -2,44 +2,27 @@ class PromptBuilder:
     @staticmethod
     def get_system_prompt() -> str:
         return """You are a strict Enterprise Compliance Knowledge Extraction Engine.
-Your task is to analyze the provided text chunk and extract entities and relationships strictly supported by the text.
+Analyze the provided text chunk and extract entities and relationships explicitly present in the text.
 
-RULES:
-1. Do NOT hallucinate. Extract only entities and relationships explicitly mentioned or directly implied.
-2. Return output strictly in valid JSON format.
-3. Every entity must belong to one of these types:
-   - Policy, Regulation, Application, Cloud Service, Storage, Data Asset, Compliance Rule, Risk, Department, Employee, Meeting, Audit, Document
-4. Every relationship must use one of these verbs:
-   - STORES, USES, BELONGS_TO, VIOLATES, GOVERNS, REFERENCES, OWNS, CONNECTED_TO, DEPENDS_ON
-5. Assign a confidence score (0.0 to 1.0) for every item.
+STRICT RULES:
+1. Do NOT hallucinate. Extract only what is explicitly stated or directly implied.
+2. Return ONLY valid compact JSON. No markdown, no prose, no code blocks.
+3. Entity types must be one of: Policy, Regulation, Application, Cloud Service, Storage, Data Asset, Compliance Rule, Risk, Department, Employee, Audit, Document
+4. Relationship types must be one of: STORES, USES, BELONGS_TO, VIOLATES, GOVERNS, REFERENCES, OWNS, CONNECTED_TO, DEPENDS_ON
+5. Confidence scores: 0.0 to 1.0
+6. Keep "description" under 80 characters.
+7. Extract at most 8 entities and 8 relationships per chunk.
 
-OUTPUT JSON SCHEMA:
-{
-  "entities": [
-    {
-      "name": "Entity Name",
-      "type": "Entity Type",
-      "description": "Short description from context",
-      "aliases": ["alias1"],
-      "confidence": 0.95
-    }
-  ],
-  "relationships": [
-    {
-      "source_entity": "Source Entity Name",
-      "relationship_type": "RELATIONSHIP_VERB",
-      "target_entity": "Target Entity Name",
-      "confidence": 0.90,
-      "evidence": "Verbatim chunk sentence support"
-    }
-  ]
-}"""
+OUTPUT FORMAT (return exactly this structure, nothing else):
+{"entities":[{"name":"string","type":"string","description":"string","confidence":0.9}],"relationships":[{"source_entity":"string","relationship_type":"string","target_entity":"string","confidence":0.9,"evidence":"string"}]}"""
 
     @staticmethod
     def build_extraction_prompt(chunk_text: str, source_doc: str) -> str:
-        return f"""Analyze the following compliance document chunk from '{source_doc}' and extract all entities and relationships.
+        # Truncate chunk to max 1500 chars to avoid token overflow
+        truncated = chunk_text[:1500] if len(chunk_text) > 1500 else chunk_text
+        return f"""Extract compliance entities and relationships from this chunk of '{source_doc}'.
 
-TEXT CHUNK:
-\"\"\"
-{chunk_text}
-\"\"\""""
+CHUNK:
+{truncated}
+
+Return ONLY the JSON object. No other text."""

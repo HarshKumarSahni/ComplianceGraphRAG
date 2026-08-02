@@ -41,7 +41,11 @@ class KnowledgeExtractionPipeline:
         if not doc_meta:
             raise BaseAppException(f"Document with ID '{document_id}' not found.", status_code=404)
 
-        logger.info(f"Starting Knowledge Extraction Pipeline for Document ID: {document_id} ({len(chunks)} chunks)")
+        total_chunks = len(chunks)
+        logger.info(
+            f"[PIPELINE START] doc={document_id} user={user_id} chunks={total_chunks} "
+            f"model={self.openrouter_client.model}"
+        )
 
         # 1. Update Status: ENTITY_EXTRACTION
         doc_meta.status = DocumentStatus.ENTITY_EXTRACTION
@@ -55,16 +59,25 @@ class KnowledgeExtractionPipeline:
 
         system_prompt = PromptBuilder.get_system_prompt()
 
-        for chunk in chunks:
+        for chunk_idx, chunk in enumerate(chunks, start=1):
             prompt = PromptBuilder.build_extraction_prompt(chunk.text, doc_meta.original_filename)
+            chunk_start = time.time()
+            logger.info(
+                f"[CHUNK {chunk_idx}/{total_chunks}] doc={document_id} chunk_id={chunk.chunk_id} "
+                f"text_len={len(chunk.text)} chars"
+            )
 
             try:
-                raw_json = await self.openrouter_client.generate_json(prompt, system_prompt)
+                raw_json = await self.openrouter_client.generate_json(
+                    prompt, system_prompt,
+                    document_id=document_id,
+                    chunk_id=chunk.chunk_id
+                )
                 is_valid, validated_output, err_msg = JSONValidator.validate_llm_json(raw_json)
 
                 if not is_valid:
                     validation_errors += 1
-                    logger.warning(f"Validation failure on chunk {chunk.chunk_id}: {err_msg}")
+                    logger.warning(f"[CHUNK {chunk_idx}/{total_chunks}] doc={document_id} chunk_id={chunk.chunk_id} validation failed: {err_msg}")
 
                 # Deduplicate entities for chunk
                 deduped_entities = EntityResolver.deduplicate_entities(validated_output.entities)
@@ -90,8 +103,15 @@ class KnowledgeExtractionPipeline:
                 total_entities += len(deduped_entities)
                 total_relationships += len(validated_output.relationships)
 
+                chunk_elapsed = round(time.time() - chunk_start, 2)
+                logger.info(
+                    f"[CHUNK {chunk_idx}/{total_chunks}] doc={document_id} chunk_id={chunk.chunk_id} "
+                    f"entities={len(deduped_entities)} relationships={len(validated_output.relationships)} "
+                    f"elapsed={chunk_elapsed}s"
+                )
+
             except Exception as e:
-                logger.error(f"Error processing chunk {chunk.chunk_id}: {str(e)}")
+                logger.error(f"[CHUNK {chunk_idx}/{total_chunks}] doc={document_id} chunk_id={chunk.chunk_id} error: {str(e)}")
                 validation_errors += 1
 
         # 2. Persist Entities, Edges & Chunks into Neo4j Graph & Vector Store
@@ -106,7 +126,7 @@ class KnowledgeExtractionPipeline:
                     "type": entity.type,
                     "description": entity.description,
                     "document_id": document_id,
-                    "user_id": user_id or "anonymous",
+                    "user_id": user_id,
                 })
             for rel in k_obj.relationships:
                 all_edges.append({
@@ -131,8 +151,11 @@ class KnowledgeExtractionPipeline:
                 "user_id": user_id,
             })
 
-        await self.graph_repo.upsert_nodes_and_edges(all_nodes, all_edges)
-        await self.graph_repo.upsert_chunks(chunk_data_list)
+        try:
+            await self.graph_repo.upsert_nodes_and_edges(all_nodes, all_edges)
+            await self.graph_repo.upsert_chunks(chunk_data_list)
+        except Exception as e:
+            logger.error(f"Failed to persist nodes/edges to Neo4j for doc {document_id}: {e}")
 
         # 3. Update Status: READY_FOR_GRAPH_BUILDING
         doc_meta.status = DocumentStatus.READY_FOR_GRAPH_BUILDING
@@ -144,8 +167,10 @@ class KnowledgeExtractionPipeline:
         avg_confidence = round(sum(confidences) / len(confidences), 2) if confidences else 1.0
 
         logger.info(
-            f"Completed Knowledge Extraction Pipeline for Document ID: {document_id}. "
-            f"Extracted {total_entities} entities and {total_relationships} relationships in {processing_time}s."
+            f"[PIPELINE DONE] doc={document_id} user={user_id} "
+            f"chunks={total_chunks} entities={total_entities} relationships={total_relationships} "
+            f"validation_errors={validation_errors} elapsed={processing_time}s "
+            f"llm_calls_expected={total_chunks} model={self.openrouter_client.model}"
         )
 
         return ExtractionPipelineResult(

@@ -6,7 +6,7 @@ const API_BASE_URL =
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 45000, // 45 seconds for processing / LLM extraction
+  timeout: 120000, // 120 seconds (2 mins) for processing / LLM extraction
   headers: {
     'Content-Type': 'application/json',
   },

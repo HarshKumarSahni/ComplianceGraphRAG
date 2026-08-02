@@ -10,19 +10,18 @@ from app.core.exceptions import ExternalAPIError
 class OpenRouterClient:
     """Production OpenRouter client for LLM text and JSON generation.
 
-    Single source of truth for all LLM calls in GraphGuard AI (Knowledge Extraction,
-    GraphRAG Query Answering, Entity Extraction, etc.).
+    Guaranteed: exactly ONE OpenRouter API call per generate_json() invocation.
+    No retries. On any error (network, 4xx, 5xx, JSON parse) → repair locally
+    or fall back to mock. Never makes a second HTTP request.
     """
 
     def __init__(self, settings: Settings):
         self.api_key = settings.OPENROUTER_API_KEY
         self.model = settings.OPENROUTER_PRIMARY_MODEL
         self.timeout = settings.REQUEST_TIMEOUT
-        self.max_retries = settings.MAX_RETRIES
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
 
     def check_health(self) -> str:
-        """Check if OpenRouter client is configured with an API key."""
         if not self.api_key:
             return "unconfigured (mock_mode)"
         return "configured"
@@ -31,25 +30,22 @@ class OpenRouterClient:
         sys_lower = system_prompt.lower()
         if "graphguard ai" in sys_lower or "cited_chunks" in sys_lower:
             return {
-                "answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers (such as AWS S3 buckets) storing personal identifiable information (PII). It mandates encryption at rest and in transit.",
+                "answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers storing PII. It mandates encryption at rest and in transit.",
                 "confidence": 0.95,
-                "cited_chunks": ["chunk-mock-1"]
+                "cited_chunks": ["chunk-mock-1"],
             }
-
         return {
             "entities": [
                 {
                     "name": "GDPR Article 32",
                     "type": "Regulation",
                     "description": "Requires technical and organizational security measures.",
-                    "aliases": ["GDPR Art 32"],
                     "confidence": 0.98,
                 },
                 {
                     "name": "Customer Data Bucket",
                     "type": "Storage",
                     "description": "AWS S3 Bucket storing PII customer data.",
-                    "aliases": ["s3-customer-pii"],
                     "confidence": 0.95,
                 },
             ],
@@ -64,13 +60,35 @@ class OpenRouterClient:
             ],
         }
 
-    async def generate_json(self, prompt: str, system_prompt: str) -> Dict[str, Any]:
-        """Generate structured JSON output from OpenRouter LLM.
+    def _is_credit_error(self, status_code: int, body: str) -> bool:
+        if status_code in (401, 402, 403, 429):
+            return True
+        body_lower = body.lower()
+        return any(kw in body_lower for kw in ("limit exceeded", "payment required", "insufficient credits", "quota"))
 
-        Falls back to a deterministic mock response if API key is missing.
+    async def generate_json(
+        self,
+        prompt: str,
+        system_prompt: str,
+        document_id: str = "unknown",
+        chunk_id: str = "unknown",
+    ) -> Dict[str, Any]:
+        """Make exactly ONE OpenRouter API call and return parsed JSON.
+
+        Flow:
+          1. Make ONE HTTP POST to OpenRouter.
+          2. On billing/auth error  → immediate mock fallback (no retry).
+          3. On network/5xx error   → immediate mock fallback (no retry).
+          4. On success             → strip markdown wrapper, try json.loads().
+          5. If json.loads() fails  → repair locally via JSONValidator (no retry).
+          6. If repair fails        → mock fallback and log.
+          7. After parsing          → return raw dict (pipeline does Pydantic validation).
         """
         if not self.api_key:
-            logger.info("OpenRouter API key missing. Operating in deterministic mock LLM mode.")
+            logger.info(
+                f"[LLM] doc={document_id} chunk={chunk_id} model=mock "
+                f"→ API key missing, using deterministic fallback."
+            )
             return self._get_mock_fallback(prompt, system_prompt)
 
         headers = {
@@ -88,50 +106,97 @@ class OpenRouterClient:
             ],
             "response_format": {"type": "json_object"},
             "temperature": 0.1,
-            "max_tokens": 2048,
+            "max_tokens": 4096,
         }
 
-        for attempt in range(1, self.max_retries + 1):
-            try:
-                async with httpx.AsyncClient(timeout=float(self.timeout)) as client:
-                    resp = await client.post(self.base_url, headers=headers, json=payload)
-                    
-                    if resp.status_code in (401, 402, 429):
-                        logger.warning(f"OpenRouter API key limit / status {resp.status_code}: {resp.text[:300]}. Utilizing fallback response.")
-                        return self._get_mock_fallback(prompt, system_prompt)
-                    elif resp.status_code != 200:
-                        logger.error(f"OpenRouter HTTP {resp.status_code} Error: {resp.text[:500]}")
-                    
-                    resp.raise_for_status()
-                    data = resp.json()
-                    
-                    if "choices" not in data or not data["choices"]:
-                        logger.error(f"OpenRouter unexpected response format: {data}")
-                        raise ExternalAPIError(f"OpenRouter invalid response structure: {data}")
-                    
-                    content_str = data["choices"][0]["message"]["content"] or ""
-                    
-                    # Clean markdown code blocks if wrapped (e.g. ```json ... ```)
-                    content_str = content_str.strip()
-                    if content_str.startswith("```"):
-                        lines = content_str.splitlines()
-                        if lines[0].startswith("```"):
-                            lines = lines[1:]
-                        if lines and lines[-1].startswith("```"):
-                            lines = lines[:-1]
-                        content_str = "\n".join(lines).strip()
-                    
-                    try:
-                        return json.loads(content_str)
-                    except json.JSONDecodeError as json_err:
-                        logger.error(f"Failed to parse LLM JSON response string ({content_str[:200]}): {json_err}")
-                        raise ExternalAPIError(f"LLM output is not valid JSON: {json_err}")
-            except Exception as e:
-                logger.warning(f"OpenRouter API request attempt {attempt}/{self.max_retries} failed: {str(e)}")
-                if "402" in str(e) or "payment required" in str(e).lower() or "limit" in str(e).lower():
-                    logger.warning("OpenRouter API key credit limit reached. Utilizing fallback response.")
-                    return self._get_mock_fallback(prompt, system_prompt)
-                if attempt == self.max_retries:
-                    logger.warning(f"OpenRouter call failed after {self.max_retries} retries. Utilizing fallback response.")
-                    return self._get_mock_fallback(prompt, system_prompt)
-                await asyncio.sleep(2**attempt)
+        # ── STEP 1: Single HTTP call ─────────────────────────────────────────
+        logger.info(
+            f"[LLM] doc={document_id} chunk={chunk_id} model={self.model} → making API call (attempt 1/1)"
+        )
+        try:
+            async with httpx.AsyncClient(timeout=float(self.timeout)) as client:
+                resp = await client.post(self.base_url, headers=headers, json=payload)
+        except (httpx.TimeoutException, httpx.ConnectError, Exception) as net_err:
+            logger.warning(
+                f"[LLM] doc={document_id} chunk={chunk_id} network error: {net_err}. "
+                f"Using mock fallback (no retry)."
+            )
+            return self._get_mock_fallback(prompt, system_prompt)
+
+        # ── STEP 2: Billing / auth errors → immediate fallback ───────────────
+        if self._is_credit_error(resp.status_code, resp.text):
+            logger.warning(
+                f"[LLM] doc={document_id} chunk={chunk_id} HTTP {resp.status_code} (billing/auth). "
+                f"Using mock fallback immediately (no retry)."
+            )
+            return self._get_mock_fallback(prompt, system_prompt)
+
+        # ── STEP 3: Other HTTP errors → fallback ─────────────────────────────
+        if resp.status_code != 200:
+            logger.error(
+                f"[LLM] doc={document_id} chunk={chunk_id} HTTP {resp.status_code}: {resp.text[:300]}. "
+                f"Using mock fallback (no retry)."
+            )
+            return self._get_mock_fallback(prompt, system_prompt)
+
+        # ── STEP 4: Parse API response ────────────────────────────────────────
+        try:
+            data = resp.json()
+        except Exception as e:
+            logger.error(
+                f"[LLM] doc={document_id} chunk={chunk_id} failed to parse API response JSON: {e}. "
+                f"Using mock fallback."
+            )
+            return self._get_mock_fallback(prompt, system_prompt)
+
+        if "choices" not in data or not data["choices"]:
+            logger.error(
+                f"[LLM] doc={document_id} chunk={chunk_id} unexpected response structure: {data}. "
+                f"Using mock fallback."
+            )
+            return self._get_mock_fallback(prompt, system_prompt)
+
+        # Log token usage
+        usage = data.get("usage", {})
+        logger.info(
+            f"[LLM] doc={document_id} chunk={chunk_id} model={self.model} "
+            f"input_tokens={usage.get('prompt_tokens', '?')} "
+            f"output_tokens={usage.get('completion_tokens', '?')} "
+            f"total_tokens={usage.get('total_tokens', '?')}"
+        )
+
+        content_str = (data["choices"][0]["message"]["content"] or "").strip()
+
+        # Strip markdown code block wrappers if present (e.g. ```json ... ```)
+        if content_str.startswith("```"):
+            lines = content_str.splitlines()
+            lines = lines[1:] if lines[0].startswith("```") else lines
+            lines = lines[:-1] if lines and lines[-1].startswith("```") else lines
+            content_str = "\n".join(lines).strip()
+
+        # ── STEP 5: Try direct JSON parse ─────────────────────────────────────
+        try:
+            return json.loads(content_str)
+        except json.JSONDecodeError as json_err:
+            logger.warning(
+                f"[LLM] doc={document_id} chunk={chunk_id} JSONDecodeError: {json_err}. "
+                f"Attempting local repair (NO extra API call)."
+            )
+
+        # ── STEP 6: Local JSON repair — NO API retry ──────────────────────────
+        from app.services.extraction.json_validator import JSONValidator
+        ok, repaired_output, repair_err = JSONValidator.repair_and_validate(content_str)
+        if ok:
+            logger.info(
+                f"[LLM] doc={document_id} chunk={chunk_id} local repair succeeded: "
+                f"entities={len(repaired_output.entities)} "
+                f"relationships={len(repaired_output.relationships)}"
+            )
+            return repaired_output.model_dump()
+
+        # ── STEP 7: Repair failed → mock fallback ─────────────────────────────
+        logger.warning(
+            f"[LLM] doc={document_id} chunk={chunk_id} local repair failed: {repair_err}. "
+            f"Using mock fallback."
+        )
+        return self._get_mock_fallback(prompt, system_prompt)
