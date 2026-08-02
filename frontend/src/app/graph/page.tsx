@@ -16,22 +16,18 @@ import '@xyflow/react/dist/style.css';
 
 import {
   Network,
-  Filter,
   RotateCcw,
   Layers,
   X,
   Maximize2,
   Minimize2,
-  Info,
-  Database,
-  Search,
   Trash2,
+  ChevronDown,
+  Info,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { SearchBar } from '@/components/ui/SearchBar';
 import { Skeleton } from '@/components/ui/Loader';
 import { graphService } from '@/services/graph.service';
 import { GraphNode, GraphEdge } from '@/types/graph';
@@ -50,13 +46,14 @@ const nodeColorMap: Record<string, { bg: string; border: string; text: string }>
 };
 
 export default function GraphPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedNodeId, setSelectedNodeId] = useState<string>('');
+  const [selectedRelType, setSelectedRelType] = useState<string>('');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Fetch Graph Data — always re-fetch on mount, no stale data from previous user
+  // Fetch Graph Data — always re-fetch on mount
   const { data: graphResponse, isLoading, refetch } = useQuery({
     queryKey: ['graph-data'],
     queryFn: () => graphService.getGraph(),
@@ -69,6 +66,9 @@ export default function GraphPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['graph-data'] });
       queryClient.invalidateQueries({ queryKey: ['graph-stats'] });
+      setSelectedNode(null);
+      setSelectedNodeId('');
+      setSelectedRelType('');
       toast({
         type: 'success',
         title: 'Knowledge Graph Cleared',
@@ -85,28 +85,60 @@ export default function GraphPage() {
   });
 
   // Strict empty arrays — never use sample/fallback data
-  const rawNodes: GraphNode[] = graphResponse?.data?.nodes ?? [];
-  const rawEdges: GraphEdge[] = graphResponse?.data?.edges ?? [];
+  const rawNodes: GraphNode[] = useMemo(() => graphResponse?.data?.nodes ?? [], [graphResponse]);
+  const rawEdges: GraphEdge[] = useMemo(() => graphResponse?.data?.edges ?? [], [graphResponse]);
 
-  // Filter nodes by search term
+  // Unique relationship types list for dropdown
+  const uniqueRelTypes = useMemo(() => {
+    const typesSet = new Set<string>();
+    rawEdges.forEach((e) => {
+      const rel = e.relationship_type || e.type;
+      if (rel) typesSet.add(rel);
+    });
+    return Array.from(typesSet).sort();
+  }, [rawEdges]);
+
+  // Filter nodes based on selected dropdown options
   const filteredNodes = useMemo(() => {
-    if (!searchTerm) return rawNodes;
-    return rawNodes.filter(
-      (n) =>
-        n.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        n.type.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [rawNodes, searchTerm]);
+    let nodesList = rawNodes;
 
-  // Convert raw nodes to React Flow nodes
+    // Filter by selected relationship type
+    if (selectedRelType) {
+      const matchingEdges = rawEdges.filter(
+        (e) => (e.relationship_type || e.type) === selectedRelType
+      );
+      const connectedNodeIds = new Set<string>();
+      matchingEdges.forEach((e) => {
+        connectedNodeIds.add(e.source);
+        connectedNodeIds.add(e.target);
+      });
+      nodesList = nodesList.filter((n) => connectedNodeIds.has(n.id || n.name));
+    }
+
+    return nodesList;
+  }, [rawNodes, rawEdges, selectedRelType]);
+
+  // Filter edges based on selected relationship type
+  const filteredEdges = useMemo(() => {
+    if (!selectedRelType) return rawEdges;
+    return rawEdges.filter((e) => (e.relationship_type || e.type) === selectedRelType);
+  }, [rawEdges, selectedRelType]);
+
+  // Convert raw nodes to React Flow nodes with generous grid spacing (prevents clustering)
   const reactFlowNodes: Node[] = useMemo(() => {
-    const center = { x: 400, y: 250 };
-    const radius = 220;
+    const total = filteredNodes.length || 1;
+    const cols = Math.max(3, Math.ceil(Math.sqrt(total * 1.5)));
+    const spacingX = 280; // Spacious 280px horizontal gap
+    const spacingY = 170; // Spacious 170px vertical gap
 
     return filteredNodes.map((node, index) => {
-      const angle = (index / (filteredNodes.length || 1)) * 2 * Math.PI;
-      const x = center.x + radius * Math.cos(angle);
-      const y = center.y + radius * Math.sin(angle);
+      const row = Math.floor(index / cols);
+      const col = index % cols;
+      const offsetX = row % 2 === 1 ? 140 : 0; // Stagger alternating rows
+      const x = col * spacingX + offsetX;
+      const y = row * spacingY;
+
+      const isSelected = selectedNodeId === (node.id || node.name);
 
       const colorScheme =
         nodeColorMap[node.type] || {
@@ -116,7 +148,7 @@ export default function GraphPage() {
         };
 
       return {
-        id: node.id || `node-${index}`,
+        id: node.id || node.name || `node-${index}`,
         position: { x, y },
         data: {
           label: (
@@ -130,30 +162,33 @@ export default function GraphPage() {
           rawNode: node,
         },
         style: {
-          background: colorScheme.bg,
-          border: `2px solid ${colorScheme.border}`,
-          color: colorScheme.text,
+          background: isSelected ? '#3b82f6' : colorScheme.bg,
+          border: isSelected ? '3px solid #1d4ed8' : `2px solid ${colorScheme.border}`,
+          color: isSelected ? '#ffffff' : colorScheme.text,
           borderRadius: '16px',
           padding: '8px 12px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+          boxShadow: isSelected
+            ? '0 0 20px rgba(59, 130, 246, 0.5)'
+            : '0 4px 12px rgba(0, 0, 0, 0.05)',
           cursor: 'pointer',
           width: 160,
+          transition: 'all 0.2s ease',
         },
       };
     });
-  }, [filteredNodes]);
+  }, [filteredNodes, selectedNodeId]);
 
   // Convert raw edges to React Flow edges
   const reactFlowEdges: Edge[] = useMemo(() => {
-    const validNodeIds = new Set(filteredNodes.map((n) => n.id));
+    const validNodeIds = new Set(filteredNodes.map((n) => n.id || n.name));
 
-    return rawEdges
+    return filteredEdges
       .filter((e) => validNodeIds.has(e.source) && validNodeIds.has(e.target))
       .map((edge, idx) => ({
         id: edge.id || `edge-${idx}`,
         source: edge.source,
         target: edge.target,
-        label: edge.type || edge.relationship_type || 'RELATED_TO',
+        label: edge.relationship_type || edge.type || 'RELATED_TO',
         animated: true,
         style: { stroke: '#94a3b8', strokeWidth: 2 },
         markerEnd: {
@@ -161,9 +196,9 @@ export default function GraphPage() {
           color: '#64748b',
         },
         labelStyle: { fill: '#64748b', fontSize: 10, fontWeight: 600 },
-        labelBgStyle: { fill: '#ffffff', fillOpacity: 0.8 },
+        labelBgStyle: { fill: '#ffffff', fillOpacity: 0.85 },
       }));
-  }, [rawEdges, filteredNodes]);
+  }, [filteredEdges, filteredNodes]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(reactFlowNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(reactFlowEdges);
@@ -171,12 +206,25 @@ export default function GraphPage() {
   React.useEffect(() => {
     setNodes(reactFlowNodes);
     setEdges(reactFlowEdges);
-  }, [graphResponse, searchTerm, setNodes, setEdges]);
+  }, [reactFlowNodes, reactFlowEdges, setNodes, setEdges]);
 
   const onNodeClick = useCallback((_: any, node: Node) => {
     const raw = (node.data as any).rawNode as GraphNode;
     setSelectedNode(raw);
+    setSelectedNodeId(raw.id || raw.name);
   }, []);
+
+  const handleNodeSelect = (nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    if (!nodeId) {
+      setSelectedNode(null);
+      return;
+    }
+    const found = rawNodes.find((n) => (n.id || n.name) === nodeId);
+    if (found) {
+      setSelectedNode(found);
+    }
+  };
 
   return (
     <div className={`space-y-6 flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 p-6 bg-slate-900' : 'h-[calc(100vh-7rem)]'}`}>
@@ -199,7 +247,16 @@ export default function GraphPage() {
                   Clear Graph Data
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedNodeId('');
+                  setSelectedRelType('');
+                  setSelectedNode(null);
+                  refetch();
+                }}
+              >
                 <RotateCcw className="w-4 h-4 mr-1.5" />
                 Reset View
               </Button>
@@ -214,49 +271,87 @@ export default function GraphPage() {
 
       {/* Main Canvas Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
-        {/* Left Sidebar Filter & Legend */}
+        {/* Left Sidebar Node & Relationship Selection Dropdowns */}
         {!isFullscreen && (
-          <Card className="lg:col-span-1 flex flex-col min-h-0">
+          <Card className="lg:col-span-1 flex flex-col min-h-0 border-slate-200 dark:border-slate-800">
             <CardHeader className="py-4 border-b border-slate-100 dark:border-slate-800/60">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <CardTitle className="text-sm">Filter & Entity Legend</CardTitle>
+                <CardTitle className="text-sm font-semibold">Graph Filters & Navigator</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="p-4 space-y-4 flex-1 overflow-y-auto">
-              <SearchBar
-                value={searchTerm}
-                onChange={setSearchTerm}
-                placeholder="Search node name..."
-                className="max-w-full"
-              />
+            <CardContent className="p-4 space-y-5 flex-1 overflow-y-auto">
 
-              <div className="space-y-2 text-xs">
-                <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 flex items-center justify-between">
-                  <span className="font-semibold text-blue-700 dark:text-blue-300">
-                    Regulation / Policy
-                  </span>
-                  <Badge variant="primary">Blue</Badge>
-                </div>
-                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/50 flex items-center justify-between">
-                  <span className="font-semibold text-indigo-700 dark:text-indigo-300">
-                    Application
-                  </span>
-                  <Badge variant="default">Indigo</Badge>
-                </div>
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 flex items-center justify-between">
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-300">
-                    Storage / Asset
-                  </span>
-                  <Badge variant="success">Emerald</Badge>
-                </div>
-                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
-                  <span className="font-semibold text-amber-700 dark:text-amber-300">
-                    Compliance Risk
-                  </span>
-                  <Badge variant="warning">Amber</Badge>
+              {/* 1. NODE DROPDOWN */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                  Select Node ({rawNodes.length})
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedNodeId}
+                    onChange={(e) => handleNodeSelect(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer pr-8"
+                  >
+                    <option value="">-- All Nodes ({rawNodes.length}) --</option>
+                    {rawNodes.map((n) => (
+                      <option key={n.id || n.name} value={n.id || n.name}>
+                        [{n.type}] {n.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none" />
                 </div>
               </div>
+
+              {/* 2. RELATIONSHIP DROPDOWN */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                  Select Relationship ({uniqueRelTypes.length})
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedRelType}
+                    onChange={(e) => setSelectedRelType(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer pr-8"
+                  >
+                    <option value="">-- All Relationships ({rawEdges.length}) --</option>
+                    {uniqueRelTypes.map((relType) => (
+                      <option key={relType} value={relType}>
+                        {relType}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Selected Node Details Box */}
+              {selectedNode && (
+                <div className="mt-4 p-3.5 rounded-xl border border-blue-200/80 bg-blue-50/60 dark:border-blue-900/50 dark:bg-blue-950/30 text-xs space-y-2 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 text-[10px]">
+                      {selectedNode.type}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setSelectedNode(null);
+                        setSelectedNodeId('');
+                      }}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100">{selectedNode.name}</h4>
+                  {selectedNode.description && (
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                      "{selectedNode.description}"
+                    </p>
+                  )}
+                </div>
+              )}
+
             </CardContent>
           </Card>
         )}
@@ -302,11 +397,11 @@ export default function GraphPage() {
                 fitView
                 className="bg-slate-50/50 dark:bg-slate-950"
               >
-                <Background color="#cbd5e1" gap={16} size={1} />
+                <Background color="#cbd5e1" gap={20} size={1} />
                 <Controls />
               </ReactFlow>
 
-              {/* Node Inspector Card */}
+              {/* Node Inspector Floating Overlay */}
               {selectedNode && (
                 <div className="absolute top-4 right-4 z-20 w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-5 shadow-2xl backdrop-blur-md animate-in slide-in-from-right duration-200">
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
@@ -314,7 +409,10 @@ export default function GraphPage() {
                       {selectedNode.type} Entity
                     </span>
                     <button
-                      onClick={() => setSelectedNode(null)}
+                      onClick={() => {
+                        setSelectedNode(null);
+                        setSelectedNodeId('');
+                      }}
                       className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                     >
                       <X className="w-4 h-4" />
@@ -329,10 +427,6 @@ export default function GraphPage() {
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {selectedNode.description || 'No description provided.'}
                       </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs space-y-1 text-slate-500">
-                      <div>Node ID: <span className="font-mono text-slate-700 dark:text-slate-300">{selectedNode.id}</span></div>
                     </div>
                   </div>
                 </div>

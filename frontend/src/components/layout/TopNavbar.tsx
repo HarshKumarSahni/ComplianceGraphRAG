@@ -5,6 +5,7 @@ import { Sun, Moon, User as UserIcon, LogOut } from 'lucide-react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/Button';
+import Link from 'next/link';
 
 export function TopNavbar() {
   const { resolvedTheme, toggleTheme } = useTheme();
