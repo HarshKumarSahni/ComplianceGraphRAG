@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, Depends
 from app.schemas.response import ApiResponse
 from app.schemas.document import MultiUploadResponse, DocumentListResponse
@@ -6,6 +6,8 @@ from app.services.upload_service import UploadService
 from app.services.cloudinary_service import CloudinaryService
 from app.repositories.json_document_repository import JSONDocumentRepository
 from app.core.config import get_settings, Settings
+from app.dependencies.auth_deps import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -22,12 +24,13 @@ def get_upload_service(settings: Settings = Depends(get_settings)) -> UploadServ
 @router.post("/upload", response_model=ApiResponse[MultiUploadResponse], status_code=status.HTTP_207_MULTI_STATUS)
 async def upload_documents(
     files: List[UploadFile] = File(...),
-    upload_service: UploadService = Depends(get_upload_service)
+    upload_service: UploadService = Depends(get_upload_service),
+    current_user: User = Depends(get_current_user),
 ):
     if not files or len(files) == 0:
         raise HTTPException(status_code=400, detail="At least one file must be provided")
 
-    result = await upload_service.process_multiple_uploads(files)
+    result = await upload_service.process_multiple_uploads(files, user_id=str(current_user.id))
     
     status_code = status.HTTP_201_CREATED if result.failed_uploads == 0 else status.HTTP_207_MULTI_STATUS
 
@@ -39,9 +42,10 @@ async def upload_documents(
 
 @router.get("", response_model=ApiResponse[DocumentListResponse])
 async def list_documents(
-    upload_service: UploadService = Depends(get_upload_service)
+    upload_service: UploadService = Depends(get_upload_service),
+    current_user: User = Depends(get_current_user),
 ):
-    result = await upload_service.list_documents()
+    result = await upload_service.list_documents(user_id=str(current_user.id))
     return ApiResponse(
         success=True,
         message="Documents retrieved successfully",

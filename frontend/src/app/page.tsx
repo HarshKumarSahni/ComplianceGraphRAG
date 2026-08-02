@@ -64,7 +64,7 @@ export default function DashboardPage() {
 
   const documents = docsData?.data?.documents || [];
   const totalDocs = docsData?.data?.total || documents.length;
-  const graphStats = graphStatsData?.data || { entity_count: 14, relationship_count: 8, chunk_count: 24 };
+  const graphStats = graphStatsData?.data || { entity_count: 0, relationship_count: 0, chunk_count: 0 };
   const systemStatus = healthData?.data?.status === 'online' || healthData?.data ? 'online' : 'degraded';
 
   const containerVariants = {
@@ -91,7 +91,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Total Nodes',
-      value: graphStatsLoading ? '...' : (graphStats.entity_count || 14).toString(),
+      value: graphStatsLoading ? '...' : (graphStats.entity_count ?? 0).toString(),
       change: 'Extracted Entities',
       icon: Network,
       color: 'text-indigo-600 dark:text-indigo-400',
@@ -99,7 +99,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Total Relationships',
-      value: graphStatsLoading ? '...' : (graphStats.relationship_count || 8).toString(),
+      value: graphStatsLoading ? '...' : (graphStats.relationship_count ?? 0).toString(),
       change: 'Neo4j Cypher Edges',
       icon: Activity,
       color: 'text-emerald-600 dark:text-emerald-400',

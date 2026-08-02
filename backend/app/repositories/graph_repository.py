@@ -128,8 +128,10 @@ class GraphRepository(IGraphRepository):
 
         if user_id:
             query = """
-            MATCH (n:Entity {user_id: $user_id})
-            OPTIONAL MATCH (n)-[r]->(m:Entity {user_id: $user_id})
+            MATCH (n:Entity)
+            WHERE n.user_id = $user_id OR n.user_id = 'anonymous' OR n.user_id IS NULL
+            OPTIONAL MATCH (n)-[r]->(m:Entity)
+            WHERE m.user_id = $user_id OR m.user_id = 'anonymous' OR m.user_id IS NULL
             RETURN n.name AS source_name,
                    n.type AS source_type,
                    n.description AS source_desc,

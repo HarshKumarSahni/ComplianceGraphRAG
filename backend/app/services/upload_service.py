@@ -1,6 +1,6 @@
 import uuid
 import os
-from typing import List
+from typing import List, Optional
 from fastapi import UploadFile
 
 from app.core.config import Settings
@@ -50,7 +50,7 @@ class UploadService:
 
         return matched_type
 
-    async def process_single_file(self, file: UploadFile) -> FileUploadStatus:
+    async def process_single_file(self, file: UploadFile, user_id: Optional[str] = None) -> FileUploadStatus:
         filename = sanitize_filename(file.filename or "unnamed_file")
         try:
             content = await file.read()
@@ -76,11 +76,12 @@ class UploadService:
                 file_size_bytes=len(content),
                 file_type=file_type,
                 mime_type=file.content_type or "application/octet-stream",
-                status=DocumentStatus.UPLOADED
+                status=DocumentStatus.UPLOADED,
+                user_id=user_id
             )
 
             await self.doc_repo.create_document(metadata)
-            logger.info(f"File upload completed successfully for: {filename} (ID: {document_id})")
+            logger.info(f"File upload completed successfully for: {filename} (ID: {document_id}, User: {user_id})")
 
             return FileUploadStatus(
                 filename=filename,
@@ -95,13 +96,13 @@ class UploadService:
                 error=str(e)
             )
 
-    async def process_multiple_uploads(self, files: List[UploadFile]) -> MultiUploadResponse:
+    async def process_multiple_uploads(self, files: List[UploadFile], user_id: Optional[str] = None) -> MultiUploadResponse:
         statuses: List[FileUploadStatus] = []
         successful_count = 0
         failed_count = 0
 
         for file in files:
-            status = await self.process_single_file(file)
+            status = await self.process_single_file(file, user_id=user_id)
             statuses.append(status)
             if status.success:
                 successful_count += 1
@@ -115,6 +116,10 @@ class UploadService:
             files=statuses
         )
 
-    async def list_documents(self) -> DocumentListResponse:
-        docs = await self.doc_repo.list_documents()
+    async def list_documents(self, user_id: Optional[str] = None) -> DocumentListResponse:
+        all_docs = await self.doc_repo.list_documents()
+        if user_id:
+            docs = [d for d in all_docs if d.user_id == user_id]
+        else:
+            docs = all_docs
         return DocumentListResponse(documents=docs, total=len(docs))

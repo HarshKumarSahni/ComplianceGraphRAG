@@ -6,6 +6,8 @@ from app.services.processing.document_processor import DocumentProcessor
 from app.services.cloudinary_service import CloudinaryService
 from app.routers.documents import _json_repo
 from app.core.config import get_settings, Settings
+from app.dependencies.auth_deps import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/documents", tags=["AI Knowledge Extraction"])
 
@@ -24,6 +26,7 @@ async def extract_knowledge(
     document_id: str,
     pipeline: KnowledgeExtractionPipeline = Depends(get_extraction_pipeline),
     processor: DocumentProcessor = Depends(get_document_processor),
+    current_user: User = Depends(get_current_user),
 ):
     # 1. Ensure document has been processed into chunks
     proc_result = await processor.process(document_id)
@@ -31,7 +34,7 @@ async def extract_knowledge(
         raise HTTPException(status_code=400, detail="Document produced no chunks for entity extraction.")
 
     # 2. Execute extraction pipeline on extracted chunks
-    result = await pipeline.process_chunks(document_id, proc_result.chunks)
+    result = await pipeline.process_chunks(document_id, proc_result.chunks, user_id=str(current_user.id))
 
     return ApiResponse(
         success=True,

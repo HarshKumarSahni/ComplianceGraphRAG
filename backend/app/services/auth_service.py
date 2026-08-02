@@ -21,8 +21,15 @@ class AuthService:
         return pbkdf2_sha256.hash(password)
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """Verify a plain text password against a stored hash."""
-        return pbkdf2_sha256.verify(plain_password, hashed_password)
+        """Verify a plain text password against a stored hash (supports pbkdf2_sha256 and bcrypt)."""
+        try:
+            if hashed_password and (hashed_password.startswith("$2b$") or hashed_password.startswith("$2a$")):
+                from passlib.hash import bcrypt
+                return bcrypt.verify(plain_password, hashed_password)
+            return pbkdf2_sha256.verify(plain_password, hashed_password)
+        except Exception as e:
+            logger.warning(f"Password verification error: {e}")
+            return False
 
     def create_access_token(self, user: User) -> str:
         """Create a signed JWT access token containing user identity claims."""
