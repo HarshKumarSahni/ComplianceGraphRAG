@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   FileText,
-  Filter,
-  Trash2,
   ExternalLink,
   RefreshCw,
   ArrowUpDown,
+  AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -29,7 +30,9 @@ export default function DocumentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFormat, setSelectedFormat] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date');
+  const [showConfirm, setShowConfirm] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { toast } = useToast();
 
   const {
@@ -41,6 +44,27 @@ export default function DocumentsPage() {
   } = useQuery({
     queryKey: ['documents-list'],
     queryFn: () => documentsService.listDocuments(),
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: () => documentsService.resetInstance(),
+    onSuccess: () => {
+      // Clear all cached data so graph/chat/documents all reflect empty state
+      queryClient.clear();
+      toast({
+        type: 'success',
+        title: 'New instance created.',
+        description: 'Upload files to begin.',
+      });
+      router.push('/upload');
+    },
+    onError: (err: any) => {
+      toast({
+        type: 'error',
+        title: 'Reset Failed',
+        description: err?.response?.data?.message || err?.message || 'Could not reset instance.',
+      });
+    },
   });
 
   const rawDocuments: DocumentMetadata[] = docsResponse?.data?.documents || [];
@@ -69,15 +93,64 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
+      {/* ── Confirmation Dialog ── */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-red-500/30 bg-slate-900 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+              </div>
+              <h2 className="text-base font-bold text-white">Start a new instance?</h2>
+            </div>
+            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+              This will <span className="text-red-400 font-semibold">permanently delete</span> your current
+              documents and knowledge graph data. Your login account will remain unchanged.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowConfirm(false)}
+                disabled={resetMutation.isPending}
+                className="rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                isLoading={resetMutation.isPending}
+                onClick={() => { setShowConfirm(false); resetMutation.mutate(); }}
+                className="rounded-xl border-red-500/50 text-red-400 hover:bg-red-950/40"
+              >
+                Yes, Reset Everything
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PageHeader
         title="Uploaded Compliance Documents"
         description="Catalog of all ingested PDF policy documents, CSV asset inventories, and MP3 audit recordings."
         badge={`${rawDocuments.length} Registered Files`}
         action={
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-            Refresh Catalog
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              Refresh Catalog
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowConfirm(true)}
+              className="border-red-500/30 text-red-500 hover:bg-red-950/30"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              New Instance
+            </Button>
+          </div>
         }
       />
 

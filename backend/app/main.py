@@ -16,7 +16,7 @@ from app.middleware.error_handler import (
 
 from app.db.database import engine, Base
 from app.models.user import User  # Ensures User model is registered
-from app.routers import health, documents, upload_alias, process, extract, query, graph, auth
+from app.routers import health, documents, upload_alias, process, extract, query, graph, auth, instance
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -70,6 +70,7 @@ def create_application() -> FastAPI:
     app.include_router(extract.router, prefix=api_v1_str)
     app.include_router(query.router, prefix=api_v1_str)
     app.include_router(graph.router, prefix=api_v1_str)
+    app.include_router(instance.router, prefix=api_v1_str)
 
     @app.get("/", tags=["Root"])
     async def root():

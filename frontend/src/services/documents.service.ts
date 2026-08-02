@@ -55,4 +55,11 @@ export const documentsService = {
     );
     return response.data;
   },
+
+  /** Reset the current user's entire workspace (documents + graph). Preserves user account. */
+  async resetInstance(): Promise<ApiResponse<any>> {
+    const response = await apiClient.delete<ApiResponse<any>>('/instance');
+    return response.data;
+  },
 };
+

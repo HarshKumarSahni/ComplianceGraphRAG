@@ -47,3 +47,21 @@ class JSONDocumentRepository(IDocumentRepository):
     async def list_documents(self) -> List[DocumentMetadata]:
         data = self._read_data()
         return [DocumentMetadata(**doc) for doc in data.values()]
+
+    async def delete_user_documents(self, user_id: str) -> List[DocumentMetadata]:
+        """Delete all document records belonging to user_id. Returns the deleted docs so callers can clean Cloudinary."""
+        data = self._read_data()
+        to_keep = {}
+        deleted = []
+        for doc_id, doc_dict in data.items():
+            if doc_dict.get("user_id") == user_id:
+                try:
+                    deleted.append(DocumentMetadata(**doc_dict))
+                except Exception:
+                    pass
+            else:
+                to_keep[doc_id] = doc_dict
+        self._write_data(to_keep)
+        logger.info(f"Deleted {len(deleted)} document records for user {user_id}")
+        return deleted
+
