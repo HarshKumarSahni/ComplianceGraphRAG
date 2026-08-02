@@ -1,0 +1,3 @@
+system,data_type,encryption_status,control,audit_status
+Server A,Customer Data,Disabled,EC-1,Failed
+Server B,Public Data,Enabled,EC-2,Passed
