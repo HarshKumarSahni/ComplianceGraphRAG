@@ -9,7 +9,6 @@ import {
   MessageSquare,
   Network,
   FileText,
-  Settings,
   ShieldCheck,
   ChevronRight,
 } from 'lucide-react';
@@ -28,7 +27,6 @@ const navItems: NavItem[] = [
   { name: 'Chat Assistant', href: '/chat', icon: MessageSquare, badge: 'RAG' },
   { name: 'Knowledge Graph', href: '/graph', icon: Network },
   { name: 'Documents', href: '/documents', icon: FileText },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {

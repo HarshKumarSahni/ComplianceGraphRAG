@@ -1,0 +1,240 @@
+{
+  "summary": {
+    "questions_tested": 15,
+    "answerable_questions": 11,
+    "unanswerable_questions": 4,
+    "retrieval_precision_at_5": 0.0,
+    "entity_precision": 0.0,
+    "entity_recall": 0.0,
+    "entity_f1": 0.0,
+    "relationship_precision": 0.0,
+    "relationship_recall": 0.0,
+    "relationship_f1": 0.0,
+    "hallucination_containment": 0.5,
+    "citation_traceability": 0.0,
+    "average_latency_ms": 3.33
+  },
+  "questions": [
+    {
+      "id": "Q1",
+      "question": "Which system has encryption at rest disabled according to the system inventory?",
+      "answerable": true,
+      "expected_keywords": [
+        "Support CRM",
+        "File Transfer Service"
+      ],
+      "expected_sources": [
+        "03_System_Inventory.csv",
+        "01_Data_Protection_Policy.pdf",
+        "04_Audit_Findings.csv"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 9.22
+    },
+    {
+      "id": "Q2",
+      "question": "Who owns the Support CRM?",
+      "answerable": true,
+      "expected_keywords": [
+        "Customer Operations Team"
+      ],
+      "expected_sources": [
+        "03_System_Inventory.csv",
+        "02_Access_Control_Policy.pdf"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 4.17
+    },
+    {
+      "id": "Q3",
+      "question": "Which team owns the Analytics Warehouse?",
+      "answerable": true,
+      "expected_keywords": [
+        "Data Engineering Team"
+      ],
+      "expected_sources": [
+        "03_System_Inventory.csv"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 3.65
+    },
+    {
+      "id": "Q4",
+      "question": "Which control requires encryption at rest for Customer PII?",
+      "answerable": true,
+      "expected_keywords": [
+        "ENC-01"
+      ],
+      "expected_sources": [
+        "01_Data_Protection_Policy.pdf"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 2.84
+    },
+    {
+      "id": "Q5",
+      "question": "Which control requires multi-factor authentication for sensitive systems?",
+      "answerable": true,
+      "expected_keywords": [
+        "MFA-01"
+      ],
+      "expected_sources": [
+        "02_Access_Control_Policy.pdf"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 2.94
+    },
+    {
+      "id": "Q6",
+      "question": "What type of data does the Payment Gateway process?",
+      "answerable": true,
+      "expected_keywords": [
+        "Payment Card Data"
+      ],
+      "expected_sources": [
+        "03_System_Inventory.csv",
+        "01_Data_Protection_Policy.pdf"
+      ],
+      "actual_answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers storing PII. It mandates encryption at rest and in transit.",
+      "citation_count": 1,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 5.37
+    },
+    {
+      "id": "Q7",
+      "question": "What is the severity of the Support CRM encryption finding?",
+      "answerable": true,
+      "expected_keywords": [
+        "High"
+      ],
+      "expected_sources": [
+        "04_Audit_Findings.csv"
+      ],
+      "actual_answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers storing PII. It mandates encryption at rest and in transit.",
+      "citation_count": 1,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 3.04
+    },
+    {
+      "id": "Q8",
+      "question": "When is the Analytics Warehouse MFA remediation due?",
+      "answerable": true,
+      "expected_keywords": [
+        "August 8, 2026",
+        "2026-08-08"
+      ],
+      "expected_sources": [
+        "04_Audit_Findings.csv",
+        "06_Audit_Remediation_Meeting.mp3"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 2.54
+    },
+    {
+      "id": "Q9",
+      "question": "Which system stores Customer PII and currently violates ENC-01?",
+      "answerable": true,
+      "expected_keywords": [
+        "Support CRM"
+      ],
+      "expected_sources": [
+        "03_System_Inventory.csv",
+        "04_Audit_Findings.csv",
+        "01_Data_Protection_Policy.pdf"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 2.24
+    },
+    {
+      "id": "Q10",
+      "question": "Which high-risk system is encrypted at rest but does not have MFA enabled?",
+      "answerable": true,
+      "expected_keywords": [
+        "Analytics Warehouse"
+      ],
+      "expected_sources": [
+        "03_System_Inventory.csv",
+        "04_Audit_Findings.csv",
+        "02_Access_Control_Policy.pdf"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 2.27
+    },
+    {
+      "id": "Q11",
+      "question": "Which team is responsible for fixing the Support CRM encryption issue?",
+      "answerable": true,
+      "expected_keywords": [
+        "Customer Operations Team"
+      ],
+      "expected_sources": [
+        "03_System_Inventory.csv",
+        "04_Audit_Findings.csv",
+        "06_Audit_Remediation_Meeting.mp3"
+      ],
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "citation_count": 0,
+      "retrieval_precision_at_5": 0.0,
+      "citation_traceable": false,
+      "latency_ms": 1.87
+    },
+    {
+      "id": "Q12",
+      "question": "Who is the CEO of Northstar Digital Services?",
+      "answerable": false,
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "refusal_detected": true,
+      "latency_ms": 2.31
+    },
+    {
+      "id": "Q13",
+      "question": "What is the annual revenue of Northstar Digital Services?",
+      "answerable": false,
+      "actual_answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers storing PII. It mandates encryption at rest and in transit.",
+      "refusal_detected": false,
+      "latency_ms": 2.15
+    },
+    {
+      "id": "Q14",
+      "question": "Where is the company headquarters located?",
+      "answerable": false,
+      "actual_answer": "The knowledge graph does not contain information relevant to this question. Please ensure documents have been uploaded and processed.",
+      "refusal_detected": true,
+      "latency_ms": 2.44
+    },
+    {
+      "id": "Q15",
+      "question": "What is the CEO's phone number?",
+      "answerable": false,
+      "actual_answer": "GDPR Article 32 governs technical and organizational security measures for protecting cloud storage containers storing PII. It mandates encryption at rest and in transit.",
+      "refusal_detected": false,
+      "latency_ms": 2.94
+    }
+  ]
+}
