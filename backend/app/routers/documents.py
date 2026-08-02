@@ -40,12 +40,15 @@ async def upload_documents(
         data=result
     )
 
+from app.dependencies.auth_deps import get_current_user, get_current_user_optional
+
 @router.get("", response_model=ApiResponse[DocumentListResponse])
 async def list_documents(
     upload_service: UploadService = Depends(get_upload_service),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    result = await upload_service.list_documents(user_id=str(current_user.id))
+    user_id = str(current_user.id) if current_user else None
+    result = await upload_service.list_documents(user_id=user_id)
     return ApiResponse(
         success=True,
         message="Documents retrieved successfully",
