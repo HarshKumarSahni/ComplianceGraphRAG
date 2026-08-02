@@ -23,6 +23,10 @@ import os
 import sys
 import json
 import time
+import urllib3
+
+# Suppress SSL warnings — safe for a local private evaluation script
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import csv
 import re
 import requests
@@ -87,7 +91,7 @@ def login(base_url, email, password):
     url = f"{base_url}/api/v1/auth/login"
     print(f"\n  Logging in as {email} ...")
     try:
-        r = requests.post(url, json={"email": email, "password": password}, timeout=30)
+        r = requests.post(url, json={"email": email, "password": password}, timeout=30, verify=False)
         r.raise_for_status()
         token = r.json()["data"]["access_token"]
         print("      Login successful.")
@@ -107,7 +111,7 @@ def fetch_graph(base_url, token):
     headers = {"Authorization": f"Bearer {token}"}
     print("  Fetching live knowledge graph ...")
     try:
-        r = requests.get(f"{base_url}/api/v1/graph", headers=headers, timeout=30)
+        r = requests.get(f"{base_url}/api/v1/graph", headers=headers, timeout=30, verify=False)
         r.raise_for_status()
         data  = r.json().get("data", {})
         nodes = data.get("nodes", [])
@@ -128,7 +132,7 @@ def ask_question(base_url, token, question, top_k=3):
     start = time.time()
     try:
         r = requests.post(f"{base_url}/api/v1/query", json=payload,
-                          headers=headers, timeout=60)
+                          headers=headers, timeout=60, verify=False)
         latency_ms = (time.time() - start) * 1000
         r.raise_for_status()
         data = r.json().get("data", {})
