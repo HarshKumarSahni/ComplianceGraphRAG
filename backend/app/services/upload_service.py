@@ -118,4 +118,8 @@ class UploadService:
 
     async def list_documents(self, user_id: Optional[str] = None) -> DocumentListResponse:
         all_docs = await self.doc_repo.list_documents()
-        return DocumentListResponse(documents=all_docs, total=len(all_docs))
+        if user_id:
+            docs = [d for d in all_docs if d.user_id == user_id]
+        else:
+            docs = all_docs
+        return DocumentListResponse(documents=docs, total=len(docs))
