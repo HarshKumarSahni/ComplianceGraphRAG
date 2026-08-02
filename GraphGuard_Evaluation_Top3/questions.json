@@ -9,8 +9,8 @@
     ],
     "answerable": true,
     "expected_sources": [
-      "sample_policy(3).pdf",
-      "sample_audit(2).csv"
+      "sample_policy.pdf",
+      "sample_audit.csv"
     ]
   },
   {
@@ -23,9 +23,9 @@
     ],
     "answerable": true,
     "expected_sources": [
-      "sample_policy(3).pdf",
-      "sample_audit(2).csv",
-      "sample3.pdf"
+      "sample_policy.pdf",
+      "sample3.pdf",
+      "sample_audit.csv"
     ]
   },
   {
@@ -38,7 +38,7 @@
     ],
     "answerable": true,
     "expected_sources": [
-      "sample_policy(3).pdf"
+      "sample_policy.pdf"
     ]
   },
   {
@@ -51,7 +51,7 @@
     ],
     "answerable": true,
     "expected_sources": [
-      "sample_audit(2).csv"
+      "sample_audit.csv"
     ]
   },
   {
@@ -64,7 +64,7 @@
     ],
     "answerable": true,
     "expected_sources": [
-      "sample_audit(2).csv"
+      "sample_audit.csv"
     ]
   },
   {
@@ -79,8 +79,8 @@
     ],
     "answerable": true,
     "expected_sources": [
-      "sample_policy(3).pdf",
-      "sample_audit(2).csv",
+      "sample_policy.pdf",
+      "sample_audit.csv",
       "sample3.pdf"
     ]
   },
@@ -135,7 +135,7 @@
     ],
     "answerable": true,
     "expected_sources": [
-      "sample_audit(2).csv"
+      "sample_audit.csv"
     ]
   },
   {

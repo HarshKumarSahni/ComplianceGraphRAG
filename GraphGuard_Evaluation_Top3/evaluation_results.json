@@ -1,0 +1,234 @@
+{
+  "evaluation_timestamp": "2026-08-02T11:45:01.610341Z",
+  "eval_email": "adi@gmail.com",
+  "api_base_url": "https://compliancegraphrag-backend.onrender.com",
+  "retrieval_k": 3,
+  "metric_name": "Retrieval Precision@3",
+  "questions_evaluated": 14,
+  "average_latency_ms": 10835.5,
+  "graph_node_count": 17,
+  "graph_edge_count": 23,
+  "metrics": {
+    "retrieval_precision_at_3": {
+      "score": 0.85,
+      "metric_name": "Retrieval Precision@3",
+      "reason": "Computed over 10 answerable questions.",
+      "per_question": [
+        1.0,
+        1.0,
+        1.0,
+        0.5,
+        1.0,
+        1.0,
+        0.5,
+        0.5,
+        1.0,
+        1.0
+      ]
+    },
+    "entity_extraction": {
+      "precision": 0.8667,
+      "recall": 1.0,
+      "f1": 0.9286,
+      "true_positives": [
+        "customer data",
+        "ec 2",
+        "encryption audit",
+        "encryption control ec 1",
+        "follow up audit",
+        "high compliance risk",
+        "public data",
+        "sample data protection policy",
+        "sample encryption remediation policy",
+        "security team",
+        "server a",
+        "server b",
+        "unencrypted storage risk"
+      ],
+      "false_positives": [
+        "audit row 1",
+        "audit row 2"
+      ],
+      "false_negatives": [],
+      "gold_count": 13,
+      "actual_count": 15
+    },
+    "hallucination_containment": {
+      "score": 1.0,
+      "passed": 4,
+      "total": 4,
+      "failed_ids": [],
+      "reason": "4/4 NOT_FOUND questions correctly refused."
+    },
+    "citation_traceability": {
+      "score": 1.0,
+      "traceable": 10,
+      "total": 10,
+      "not_traceable_ids": [],
+      "reason": "10/10 answerable questions had keyword-traceable citations."
+    },
+    "answer_match_rate": {
+      "score": 1.0,
+      "full_matches": 10,
+      "partial_matches": 0,
+      "total": 10,
+      "missed_ids": [],
+      "reason": "10/10 questions had all expected keywords in answer."
+    }
+  },
+  "per_question_results": [
+    {
+      "id": "Q1",
+      "answer": "Server A stores Customer Data, which must be encrypted when stored in company systems and requires Encryption Control EC-1.",
+      "latency_ms": 11056.0,
+      "citation_count": 3,
+      "sources": [
+        "sample_audit.csv",
+        "sample_policy.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q2",
+      "answer": "Server A must use Encryption Control EC-1, as it stores Customer Data which is required to be encrypted at rest.",
+      "latency_ms": 11370.3,
+      "citation_count": 2,
+      "sources": [
+        "01_Data_Protection_Policy.pdf",
+        "sample_policy.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q3",
+      "answer": "The Security Team is responsible for Server A.",
+      "latency_ms": 10345.4,
+      "citation_count": 2,
+      "sources": [
+        "sample_audit.csv",
+        "sample_policy.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q4",
+      "answer": "Server A's encryption status is Disabled. It stores Customer Data and is required to use Encryption Control EC-1, but the audit record shows encryption_status: Disabled and audit_status: Failed under control EC-1, indicating non-compliance and a compliance risk per the Data Protection Policy.",
+      "latency_ms": 12483.8,
+      "citation_count": 2,
+      "sources": [
+        "sample_audit.csv",
+        "sample_policy.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q5",
+      "answer": "The audit result for Server A was 'Failed.' The record shows that under control EC-1, Server A had encryption at rest disabled for Customer Data, resulting in a failed audit status.",
+      "latency_ms": 10870.9,
+      "citation_count": 1,
+      "sources": [
+        "sample_audit.csv",
+        "04_Audit_Findings.csv"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q6",
+      "answer": "Server A is a compliance risk because it stores Customer Data and is required to comply with Encryption Control EC-1, which mandates encryption at rest. An audit of Server A recorded a failed status under EC-1, indicating that encryption is disabled or not properly implemented. Per policy, any system storing Customer Data without encryption—or failing its EC-1 audit—is classified as a compliance risk; this specific failure has been categorized as a High compliance risk due to disabled encryption",
+      "latency_ms": 11782.9,
+      "citation_count": 2,
+      "sources": [
+        "sample3.pdf",
+        "sample_policy.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q7",
+      "answer": "If encryption is disabled on a system storing Customer Data, the issue must be classified as a High compliance risk. This is explicitly stated for Server A, which stores Customer Data and is required to comply with Encryption Control EC-1, and is corroborated by a similar rule (ENC-01) in the Data Protection Policy, where disabling encryption-at-rest on a system storing Customer PII also results in a High compliance risk classification.",
+      "latency_ms": 12082.9,
+      "citation_count": 2,
+      "sources": [
+        "01_Data_Protection_Policy.pdf",
+        "sample3.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q8",
+      "answer": "The Security Team should coordinate remediation with the system owner if Server A fails an encryption audit under Control EC-1.",
+      "latency_ms": 13177.6,
+      "citation_count": 2,
+      "sources": [
+        "sample_policy.pdf",
+        "sample3.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q9",
+      "answer": "Remediation for Server A is considered complete only after encryption is enabled on the system and a follow-up audit confirms that Encryption Control EC-1 is satisfied.",
+      "latency_ms": 10795.9,
+      "citation_count": 1,
+      "sources": [
+        "sample_policy.pdf",
+        "sample3.pdf"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q10",
+      "answer": "Server B has Public Data and passed its audit. According to the audit record: system Server B, data_type Public Data, encryption_status Enabled, control EC-2, audit_status Passed.",
+      "latency_ms": 10550.3,
+      "citation_count": 1,
+      "sources": [
+        "sample_audit.csv",
+        "04_Audit_Findings.csv"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q11",
+      "answer": "The available evidence does not contain sufficient information to answer this question.",
+      "latency_ms": 8902.6,
+      "citation_count": 3,
+      "sources": [
+        "01_Data_Protection_Policy.pdf",
+        "03_System_Inventory.csv"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q12",
+      "answer": "The available evidence does not contain sufficient information to answer this question.",
+      "latency_ms": 9232.3,
+      "citation_count": 3,
+      "sources": [
+        "04_Audit_Findings.csv",
+        "03_System_Inventory.csv"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q13",
+      "answer": "The available evidence does not contain sufficient information to answer this question.",
+      "latency_ms": 8880.1,
+      "citation_count": 3,
+      "sources": [
+        "03_System_Inventory.csv"
+      ],
+      "error": null
+    },
+    {
+      "id": "Q14",
+      "answer": "The available evidence does not contain sufficient information to answer this question.",
+      "latency_ms": 10166.3,
+      "citation_count": 3,
+      "sources": [
+        "sample_audit.csv",
+        "sample_policy.pdf"
+      ],
+      "error": null
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+id,question,expected_answer,answerable,expected_keywords,expected_sources
+Q1,What data does Server A store?,Customer Data,True,Server A | Customer Data,sample_policy.pdf | sample_audit.csv
+Q2,Which encryption control must Server A use?,EC-1,True,Server A | EC-1,sample_policy.pdf | sample3.pdf | sample_audit.csv
+Q3,Who is responsible for Server A?,Security Team,True,Security Team | Server A,sample_policy.pdf
+Q4,What is the encryption status of Server A?,Disabled,True,Server A | Disabled,sample_audit.csv
+Q5,What was the audit result for Server A?,Failed,True,Server A | Failed,sample_audit.csv
+Q6,Why is Server A a compliance risk?,"Server A stores Customer Data but encryption is disabled, so it violates EC-1 and creates a compliance risk.",True,Server A | Customer Data | encryption | EC-1,sample_policy.pdf | sample_audit.csv | sample3.pdf
+Q7,What severity should be assigned when encryption is disabled on a system storing Customer Data?,High compliance risk,True,High | compliance risk,sample3.pdf
+Q8,Which team should coordinate remediation if Server A fails an encryption audit?,Security Team,True,Security Team,sample3.pdf
+Q9,When is remediation for Server A considered complete?,After encryption is enabled and a follow-up audit confirms that EC-1 is satisfied.,True,encryption | enabled | follow-up audit | EC-1,sample3.pdf
+Q10,Which server has Public Data and passed its audit?,Server B,True,Server B | Public Data | Passed,sample_audit.csv
+Q11,Who is the CEO of the company?,NOT_FOUND,False,,
+Q12,What is the company's annual revenue?,NOT_FOUND,False,,
+Q13,Where is the company headquarters?,NOT_FOUND,False,,
+Q14,What is Server A's IP address?,NOT_FOUND,False,,

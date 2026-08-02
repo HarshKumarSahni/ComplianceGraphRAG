@@ -1,0 +1,11 @@
+{
+  "retrieval_k": 3,
+  "retrieval_metric_name": "Retrieval Precision@3",
+  "test_email": "adi@gmail.com",
+  "notes": [
+    "Evaluation must use the deployed backend and the same user-scoped graph.",
+    "Do not hardcode scores.",
+    "Do not use LLM-as-judge.",
+    "Only run evaluation manually."
+  ]
+}

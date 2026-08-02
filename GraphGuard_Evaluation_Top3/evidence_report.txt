@@ -1,0 +1,219 @@
+================================================================================
+GraphGuard AI -- Per-Question Evidence Report (Top@3)
+Generated: 2026-08-02T11:45:01.616250Z
+================================================================================
+
+----------------------------------------------------------------------
+[Q1] What data does Server A store?
+  Answerable : True
+  Expected   : Customer Data
+  Keywords   : Server A, Customer Data
+  Latency    : 11056.0 ms
+  Answer     :
+    Server A stores Customer Data, which must be encrypted when stored in company systems and requires Encryption Control EC-1.
+  Sources    (2): sample_audit.csv, sample_policy.pdf
+  Citations  (3):
+    [1] sample_policy.pdf (conf=0.78)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+    [2] sample_policy.pdf (conf=0.78)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+    [3] sample_audit.csv (conf=0.78)
+        "Record Row 1: system: Server A, data_type: Customer Data, encryption_status: Disabled, control: EC-1, audit_status: Failed. Record Row 2: system: Server B, data_type: Public Data, encryption_status: E"
+
+----------------------------------------------------------------------
+[Q2] Which encryption control must Server A use?
+  Answerable : True
+  Expected   : EC-1
+  Keywords   : Server A, EC-1
+  Latency    : 11370.3 ms
+  Answer     :
+    Server A must use Encryption Control EC-1, as it stores Customer Data which is required to be encrypted at rest.
+  Sources    (2): 01_Data_Protection_Policy.pdf, sample_policy.pdf
+  Citations  (2):
+    [1] sample_policy.pdf (conf=0.82)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+    [2] sample_policy.pdf (conf=0.82)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+
+----------------------------------------------------------------------
+[Q3] Who is responsible for Server A?
+  Answerable : True
+  Expected   : Security Team
+  Keywords   : Security Team, Server A
+  Latency    : 10345.4 ms
+  Answer     :
+    The Security Team is responsible for Server A.
+  Sources    (2): sample_audit.csv, sample_policy.pdf
+  Citations  (2):
+    [1] sample_policy.pdf (conf=0.72)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+    [2] sample_policy.pdf (conf=0.72)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+
+----------------------------------------------------------------------
+[Q4] What is the encryption status of Server A?
+  Answerable : True
+  Expected   : Disabled
+  Keywords   : Server A, Disabled
+  Latency    : 12483.8 ms
+  Answer     :
+    Server A's encryption status is Disabled. It stores Customer Data and is required to use Encryption Control EC-1, but the audit record shows encryption_status: Disabled and audit_status: Failed under control EC-1, indicating non-compliance and a compliance risk per the Data Protection Policy.
+  Sources    (2): sample_audit.csv, sample_policy.pdf
+  Citations  (2):
+    [1] sample_audit.csv (conf=0.82)
+        "Record Row 1: system: Server A, data_type: Customer Data, encryption_status: Disabled, control: EC-1, audit_status: Failed. Record Row 2: system: Server B, data_type: Public Data, encryption_status: E"
+    [2] sample_policy.pdf (conf=0.80)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+
+----------------------------------------------------------------------
+[Q5] What was the audit result for Server A?
+  Answerable : True
+  Expected   : Failed
+  Keywords   : Server A, Failed
+  Latency    : 10870.9 ms
+  Answer     :
+    The audit result for Server A was 'Failed.' The record shows that under control EC-1, Server A had encryption at rest disabled for Customer Data, resulting in a failed audit status.
+  Sources    (2): sample_audit.csv, 04_Audit_Findings.csv
+  Citations  (1):
+    [1] sample_audit.csv (conf=0.78)
+        "Record Row 1: system: Server A, data_type: Customer Data, encryption_status: Disabled, control: EC-1, audit_status: Failed. Record Row 2: system: Server B, data_type: Public Data, encryption_status: E"
+
+----------------------------------------------------------------------
+[Q6] Why is Server A a compliance risk?
+  Answerable : True
+  Expected   : Server A stores Customer Data but encryption is disabled, so it violates EC-1 and creates a compliance risk.
+  Keywords   : Server A, Customer Data, encryption, EC-1
+  Latency    : 11782.9 ms
+  Answer     :
+    Server A is a compliance risk because it stores Customer Data and is required to comply with Encryption Control EC-1, which mandates encryption at rest. An audit of Server A recorded a failed status under EC-1, indicating that encryption is disabled or not properly implemented. Per policy, any system storing Customer Data without encryption—or failing its EC-1 audit—is classified as a compliance risk; this specific failure has been categorized as a High compliance risk due to disabled encryption-at-rest on a system holding Customer Data.
+  Sources    (2): sample3.pdf, sample_policy.pdf
+  Citations  (2):
+    [1] sample_policy.pdf (conf=0.79)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+    [2] sample3.pdf (conf=0.78)
+        "Sample Encryption Remediation Policy 1. Any company system that stores Customer Data must comply with Encryption Control EC-1. 2. If encryption is disabled on a system storing Customer Data, the issue"
+
+----------------------------------------------------------------------
+[Q7] What severity should be assigned when encryption is disabled on a system storing Customer Data?
+  Answerable : True
+  Expected   : High compliance risk
+  Keywords   : High, compliance risk
+  Latency    : 12082.9 ms
+  Answer     :
+    If encryption is disabled on a system storing Customer Data, the issue must be classified as a High compliance risk. This is explicitly stated for Server A, which stores Customer Data and is required to comply with Encryption Control EC-1, and is corroborated by a similar rule (ENC-01) in the Data Protection Policy, where disabling encryption-at-rest on a system storing Customer PII also results in a High compliance risk classification.
+  Sources    (2): 01_Data_Protection_Policy.pdf, sample3.pdf
+  Citations  (2):
+    [1] sample3.pdf (conf=0.83)
+        "Sample Encryption Remediation Policy 1. Any company system that stores Customer Data must comply with Encryption Control EC-1. 2. If encryption is disabled on a system storing Customer Data, the issue"
+    [2] 01_Data_Protection_Policy.pdf (conf=0.82)
+        "If its PostgreSQL encryption-at-rest setting is disabled, the CRM violates ENC-01 and creates a High compliance risk. Example B: The Analytics Warehouse may process Customer PII only while the Analyti"
+
+----------------------------------------------------------------------
+[Q8] Which team should coordinate remediation if Server A fails an encryption audit?
+  Answerable : True
+  Expected   : Security Team
+  Keywords   : Security Team
+  Latency    : 13177.6 ms
+  Answer     :
+    The Security Team should coordinate remediation with the system owner if Server A fails an encryption audit under Control EC-1.
+  Sources    (2): sample_policy.pdf, sample3.pdf
+  Citations  (2):
+    [1] sample3.pdf (conf=0.81)
+        "Sample Encryption Remediation Policy 1. Any company system that stores Customer Data must comply with Encryption Control EC-1. 2. If encryption is disabled on a system storing Customer Data, the issue"
+    [2] sample_policy.pdf (conf=0.78)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+
+----------------------------------------------------------------------
+[Q9] When is remediation for Server A considered complete?
+  Answerable : True
+  Expected   : After encryption is enabled and a follow-up audit confirms that EC-1 is satisfied.
+  Keywords   : encryption, enabled, follow-up audit, EC-1
+  Latency    : 10795.9 ms
+  Answer     :
+    Remediation for Server A is considered complete only after encryption is enabled on the system and a follow-up audit confirms that Encryption Control EC-1 is satisfied.
+  Sources    (2): sample_policy.pdf, sample3.pdf
+  Citations  (1):
+    [1] sample3.pdf (conf=0.76)
+        "5. Remediation is complete only after encryption is enabled and a follow-up audit confirms that EC-1 is satisfied. 6. Systems that store only Public Data are not classified as Customer Data systems un"
+
+----------------------------------------------------------------------
+[Q10] Which server has Public Data and passed its audit?
+  Answerable : True
+  Expected   : Server B
+  Keywords   : Server B, Public Data, Passed
+  Latency    : 10550.3 ms
+  Answer     :
+    Server B has Public Data and passed its audit. According to the audit record: system Server B, data_type Public Data, encryption_status Enabled, control EC-2, audit_status Passed.
+  Sources    (2): sample_audit.csv, 04_Audit_Findings.csv
+  Citations  (1):
+    [1] sample_audit.csv (conf=0.80)
+        "Record Row 1: system: Server A, data_type: Customer Data, encryption_status: Disabled, control: EC-1, audit_status: Failed. Record Row 2: system: Server B, data_type: Public Data, encryption_status: E"
+
+----------------------------------------------------------------------
+[Q11] Who is the CEO of the company?
+  Answerable : False
+  Expected   : NOT_FOUND
+  Keywords   : 
+  Latency    : 8902.6 ms
+  Answer     :
+    The available evidence does not contain sufficient information to answer this question.
+  Sources    (2): 01_Data_Protection_Policy.pdf, 03_System_Inventory.csv
+  Citations  (3):
+    [1] 03_System_Inventory.csv (conf=0.68)
+        "Record Row 8: system_id: SYS-008, system_name: Marketing Website, owner_team: Marketing Technology, data_category: Public Information, primary_storage: CDN, encryption_at_rest: Yes, mfa_enabled: No, c"
+    [2] 01_Data_Protection_Policy.pdf (conf=0.68)
+        "Ownership and Review • The Security Team owns this policy and reviews it every twelve months. • The Platform Team owns the Customer Portal and Payment Gateway infrastructure. • The Customer Operations"
+    [3] 03_System_Inventory.csv (conf=0.68)
+        "Record Row 9: system_id: SYS-009, system_name: Developer Wiki, owner_team: Engineering Enablement, data_category: Internal Documentation, primary_storage: SaaS, encryption_at_rest: Yes, mfa_enabled: Y"
+
+----------------------------------------------------------------------
+[Q12] What is the company's annual revenue?
+  Answerable : False
+  Expected   : NOT_FOUND
+  Keywords   : 
+  Latency    : 9232.3 ms
+  Answer     :
+    The available evidence does not contain sufficient information to answer this question.
+  Sources    (2): 04_Audit_Findings.csv, 03_System_Inventory.csv
+  Citations  (3):
+    [1] 03_System_Inventory.csv (conf=0.68)
+        "Record Row 11: system_id: SYS-011, system_name: Billing Service, owner_team: Finance Apps Team, data_category: Customer PII; Billing Data, primary_storage: Managed PostgreSQL, encryption_at_rest: Yes,"
+    [2] 04_Audit_Findings.csv (conf=0.67)
+        "Record Row 12: finding_id: F-012, audit_date: 2026-07-23, system_name: Support CRM, control_id: REV-04, finding: Quarterly access review completed with one approved exception, severity: Low, status: C"
+    [3] 03_System_Inventory.csv (conf=0.67)
+        "Record Row 8: system_id: SYS-008, system_name: Marketing Website, owner_team: Marketing Technology, data_category: Public Information, primary_storage: CDN, encryption_at_rest: Yes, mfa_enabled: No, c"
+
+----------------------------------------------------------------------
+[Q13] Where is the company headquarters?
+  Answerable : False
+  Expected   : NOT_FOUND
+  Keywords   : 
+  Latency    : 8880.1 ms
+  Answer     :
+    The available evidence does not contain sufficient information to answer this question.
+  Sources    (1): 03_System_Inventory.csv
+  Citations  (3):
+    [1] 03_System_Inventory.csv (conf=0.67)
+        "Record Row 9: system_id: SYS-009, system_name: Developer Wiki, owner_team: Engineering Enablement, data_category: Internal Documentation, primary_storage: SaaS, encryption_at_rest: Yes, mfa_enabled: Y"
+    [2] 03_System_Inventory.csv (conf=0.67)
+        "Record Row 8: system_id: SYS-008, system_name: Marketing Website, owner_team: Marketing Technology, data_category: Public Information, primary_storage: CDN, encryption_at_rest: Yes, mfa_enabled: No, c"
+    [3] 03_System_Inventory.csv (conf=0.67)
+        "Record Row 4: system_id: SYS-004, system_name: Analytics Warehouse, owner_team: Data Engineering Team, data_category: Customer PII; Transaction Data, primary_storage: Analytics S3 Bucket, encryption_a"
+
+----------------------------------------------------------------------
+[Q14] What is Server A's IP address?
+  Answerable : False
+  Expected   : NOT_FOUND
+  Keywords   : 
+  Latency    : 10166.3 ms
+  Answer     :
+    The available evidence does not contain sufficient information to answer this question.
+  Sources    (2): sample_audit.csv, sample_policy.pdf
+  Citations  (3):
+    [1] sample_audit.csv (conf=0.70)
+        "Record Row 1: system: Server A, data_type: Customer Data, encryption_status: Disabled, control: EC-1, audit_status: Failed. Record Row 2: system: Server B, data_type: Public Data, encryption_status: E"
+    [2] sample_policy.pdf (conf=0.69)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+    [3] sample_policy.pdf (conf=0.69)
+        "Sample Data Protection Policy 1. Customer Data must be encrypted when stored in company systems. 2. Server A stores Customer Data. 3. Server A must use Encryption Control EC-1. 4. The Security Team is"
+
