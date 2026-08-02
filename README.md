@@ -23,24 +23,43 @@
 
 ## 📊 Evaluation & Benchmark Performance
 
-GraphGuard AI was benchmarked against the gold-standard compliance dataset using the private automated evaluation engine (`GraphGuard_Evaluation_Top3/evaluate.py`). The retrieval pipeline uses **`top_k = 3`** evidence chunks.
+GraphGuard AI was evaluated using a private automated benchmark suite designed around the official challenge metrics: **Retrieval Precision, Entity Extraction F1, Hallucination Containment, and Citation Traceability**. The complete GraphRAG pipeline was tested on a compliance knowledge base consisting of PDF policies and CSV audit logs using **Top-3 evidence retrieval (`top_k = 3`)**. The benchmark included **14 evaluation queries** (10 answerable compliance questions and 4 out-of-domain questions). :contentReference[oaicite:0]{index=0}
 
 ### Official Performance Metrics
 
-| Metric | Score | Benchmark Target | Result / Interpretation |
-| :--- | :---: | :---: | :--- |
-| **Retrieval Precision@3** | **85.0%** | $\ge 75\%$ | **Exceeds Target** — High-relevance top-3 chunk retrieval across PDF policies & CSV logs |
-| **Entity Extraction F1** | **92.86%** | $\ge 80\%$ | **Exceeds Target** — High precision entity & alias extraction stored in Neo4j |
-| **Hallucination Containment** | **100.0%** | $100\%$ | **Perfect Score** — 100% correct refusal on unsupported out-of-domain questions |
-| **Citation Traceability** | **100.0%** | $100\%$ | **Perfect Score** — Every answerable response is linked to verbatim document citations |
-| **Answer Match Rate** | **100.0%** | $\ge 90\%$ | **Perfect Score** — 100% exact fact and keyword match across all test queries |
-| **Average Query Latency** | **10.84 sec** | $< 15\text{ sec}$ | **Optimized** — End-to-end multi-hop graph retrieval and LLM synthesis |
+| Metric | Score | Target | Status |
+|---------|:-----:|:------:|--------|
+| **Retrieval Precision@3** | **85.00%** | ≥ 75% | ✅ Exceeds Target |
+| **Entity Extraction F1** | **92.86%** | ≥ 80% | ✅ Exceeds Target |
+| **Hallucination Containment** | **100.00%** | 100% | ✅ Perfect |
+| **Citation Traceability** | **100.00%** | 100% | ✅ Perfect |
+| **Answer Match Rate** | **100.00%** | ≥ 90% | ✅ Perfect |
+| **Average Query Latency** | **10.84 sec** | < 15 sec | ✅ Optimized |
 
-### Key Benchmark Insights
-- **Factual Accuracy (Q1–Q10)**: All answerable compliance queries (e.g., control enforcement, audit failures, risk severity, team responsibilities) achieved a 100% match against expected ground-truth facts.
-- **Hallucination Guardrails (Q11–Q14)**: 100% of out-of-domain / unanswerable questions (e.g., company revenue, CEO identity, IP addresses) were cleanly refused without hallucination.
-- **Top-3 Evidence Precision**: Shifting from `top_k=5` to `top_k=3` produced significantly cleaner context windows, yielding an **85.0% Retrieval Precision@3**.
+---
 
+### Benchmark Highlights
+
+- ✅ **100% Answer Match Rate** across all **10 answerable compliance questions**, correctly identifying entities, controls, audit findings, compliance risks, remediation steps, and responsible teams.
+- ✅ **100% Hallucination Containment**, correctly refusing all **4 unsupported/out-of-domain questions** without generating fabricated information.
+- ✅ **100% Citation Traceability**, with every generated answer linked back to the original compliance documents used during retrieval.
+- ✅ **92.86% Entity Extraction F1**, demonstrating high-quality knowledge graph construction with **100% Recall** and **86.67% Precision**.
+- ✅ **85% Retrieval Precision@3**, showing highly relevant evidence retrieval while minimizing noisy context.
+- ⚡ **10.84-second average end-to-end latency**, including GraphRAG retrieval, Neo4j traversal, and LLM response generation.
+
+---
+
+### Evaluation Summary
+
+The benchmark validates that GraphGuard AI successfully achieves the primary objectives of the challenge:
+
+- 🔹 Accurate multi-document compliance retrieval using GraphRAG.
+- 🔹 High-quality entity and relationship extraction into Neo4j.
+- 🔹 Explainable, citation-backed responses grounded in source documents.
+- 🔹 Zero hallucinations on unsupported queries.
+- 🔹 Reliable and audit-ready compliance reasoning.
+
+Overall, the evaluation demonstrates that GraphGuard AI provides **trustworthy, explainable, and enterprise-ready compliance assistance** by combining structured Knowledge Graph retrieval with LLM-powered reasoning over heterogeneous compliance documents.
 ---
 
 ## 🏛️ System Architecture
