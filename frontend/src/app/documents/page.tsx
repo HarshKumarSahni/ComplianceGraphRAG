@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   FileText,
@@ -9,7 +9,6 @@ import {
   Trash2,
   ExternalLink,
   RefreshCw,
-  Sparkles,
   ArrowUpDown,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -42,25 +41,6 @@ export default function DocumentsPage() {
   } = useQuery({
     queryKey: ['documents-list'],
     queryFn: () => documentsService.listDocuments(),
-  });
-
-  const extractMutation = useMutation({
-    mutationFn: (documentId: string) => documentsService.extractKnowledge(documentId),
-    onSuccess: (data) => {
-      toast({
-        type: 'success',
-        title: 'Knowledge Extraction Complete',
-        description: `Extracted ${data?.data?.entity_count || 0} entities & ${data?.data?.relationship_count || 0} relationships.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ['documents-list'] });
-    },
-    onError: (err: any) => {
-      toast({
-        type: 'error',
-        title: 'Extraction Failed',
-        description: err.message || 'Could not extract entities from document.',
-      });
-    },
   });
 
   const rawDocuments: DocumentMetadata[] = docsResponse?.data?.documents || [];
@@ -208,18 +188,6 @@ export default function DocumentsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                        isLoading={extractMutation.isPending}
-                        onClick={() => extractMutation.mutate(doc.document_id)}
-                        title="Run AI knowledge extraction"
-                      >
-                        <Sparkles className="w-3 h-3 mr-1 text-purple-500" />
-                        Extract
-                      </Button>
-
                       {doc.cloudinary_url && (
                         <a
                           href={doc.cloudinary_url}

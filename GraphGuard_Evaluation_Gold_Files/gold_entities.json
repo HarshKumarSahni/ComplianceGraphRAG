@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Sample Data Protection Policy",
+    "type": "Policy"
+  },
+  {
+    "name": "Customer Data",
+    "type": "Data Asset"
+  },
+  {
+    "name": "Encryption Control EC-1",
+    "type": "Compliance Rule",
+    "aliases": [
+      "EC-1"
+    ]
+  },
+  {
+    "name": "Server A",
+    "type": "Storage"
+  },
+  {
+    "name": "Security Team",
+    "type": "Department"
+  },
+  {
+    "name": "High compliance risk",
+    "type": "Risk"
+  },
+  {
+    "name": "Server B",
+    "type": "Storage"
+  },
+  {
+    "name": "Public Data",
+    "type": "Data Asset"
+  },
+  {
+    "name": "EC-2",
+    "type": "Compliance Rule"
+  },
+  {
+    "name": "Sample Encryption Remediation Policy",
+    "type": "Policy"
+  },
+  {
+    "name": "Encryption Audit",
+    "type": "Audit"
+  },
+  {
+    "name": "Follow-up Audit",
+    "type": "Audit"
+  },
+  {
+    "name": "Unencrypted Storage Risk",
+    "type": "Risk"
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "source": "Server A",
+    "relationship": "STORES",
+    "target": "Customer Data"
+  },
+  {
+    "source": "Server A",
+    "relationship": "REQUIRES",
+    "target": "EC-1",
+    "acceptable_relationships": [
+      "DEPENDS_ON",
+      "USES",
+      "REFERENCES"
+    ]
+  },
+  {
+    "source": "Security Team",
+    "relationship": "RESPONSIBLE_FOR",
+    "target": "Server A",
+    "acceptable_relationships": [
+      "OWNS",
+      "GOVERNS"
+    ]
+  },
+  {
+    "source": "Sample Data Protection Policy",
+    "relationship": "GOVERNS",
+    "target": "Customer Data",
+    "acceptable_relationships": [
+      "REFERENCES"
+    ]
+  },
+  {
+    "source": "Sample Data Protection Policy",
+    "relationship": "REFERENCES",
+    "target": "EC-1",
+    "acceptable_relationships": [
+      "GOVERNS"
+    ]
+  },
+  {
+    "source": "Server A",
+    "relationship": "VIOLATES",
+    "target": "Unencrypted Storage Risk"
+  },
+  {
+    "source": "Server B",
+    "relationship": "STORES",
+    "target": "Public Data"
+  },
+  {
+    "source": "Sample Encryption Remediation Policy",
+    "relationship": "REFERENCES",
+    "target": "EC-1"
+  },
+  {
+    "source": "Sample Encryption Remediation Policy",
+    "relationship": "REFERENCES",
+    "target": "Server A"
+  },
+  {
+    "source": "Encryption Audit",
+    "relationship": "REFERENCES",
+    "target": "Server A"
+  },
+  {
+    "source": "Follow-up Audit",
+    "relationship": "REFERENCES",
+    "target": "EC-1"
+  }
+]

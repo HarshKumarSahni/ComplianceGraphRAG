@@ -1,0 +1,173 @@
+[
+  {
+    "id": "Q1",
+    "question": "What data does Server A store?",
+    "expected_answer": "Customer Data",
+    "expected_keywords": [
+      "Server A",
+      "Customer Data"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample_policy(3).pdf",
+      "sample_audit(2).csv"
+    ]
+  },
+  {
+    "id": "Q2",
+    "question": "Which encryption control must Server A use?",
+    "expected_answer": "EC-1",
+    "expected_keywords": [
+      "Server A",
+      "EC-1"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample_policy(3).pdf",
+      "sample_audit(2).csv",
+      "sample3.pdf"
+    ]
+  },
+  {
+    "id": "Q3",
+    "question": "Who is responsible for Server A?",
+    "expected_answer": "Security Team",
+    "expected_keywords": [
+      "Security Team",
+      "Server A"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample_policy(3).pdf"
+    ]
+  },
+  {
+    "id": "Q4",
+    "question": "What is the encryption status of Server A?",
+    "expected_answer": "Disabled",
+    "expected_keywords": [
+      "Server A",
+      "Disabled"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample_audit(2).csv"
+    ]
+  },
+  {
+    "id": "Q5",
+    "question": "What was the audit result for Server A?",
+    "expected_answer": "Failed",
+    "expected_keywords": [
+      "Server A",
+      "Failed"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample_audit(2).csv"
+    ]
+  },
+  {
+    "id": "Q6",
+    "question": "Why is Server A a compliance risk?",
+    "expected_answer": "Server A stores Customer Data but encryption is disabled, so it violates EC-1 and creates a compliance risk.",
+    "expected_keywords": [
+      "Server A",
+      "Customer Data",
+      "encryption",
+      "EC-1"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample_policy(3).pdf",
+      "sample_audit(2).csv",
+      "sample3.pdf"
+    ]
+  },
+  {
+    "id": "Q7",
+    "question": "What severity should be assigned when encryption is disabled on a system storing Customer Data?",
+    "expected_answer": "High compliance risk",
+    "expected_keywords": [
+      "High",
+      "compliance risk"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample3.pdf"
+    ]
+  },
+  {
+    "id": "Q8",
+    "question": "Which team should coordinate remediation if Server A fails an encryption audit?",
+    "expected_answer": "Security Team",
+    "expected_keywords": [
+      "Security Team"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample3.pdf"
+    ]
+  },
+  {
+    "id": "Q9",
+    "question": "When is remediation for Server A considered complete?",
+    "expected_answer": "After encryption is enabled and a follow-up audit confirms that EC-1 is satisfied.",
+    "expected_keywords": [
+      "encryption",
+      "enabled",
+      "follow-up audit",
+      "EC-1"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample3.pdf"
+    ]
+  },
+  {
+    "id": "Q10",
+    "question": "Which server has Public Data and passed its audit?",
+    "expected_answer": "Server B",
+    "expected_keywords": [
+      "Server B",
+      "Public Data",
+      "Passed"
+    ],
+    "answerable": true,
+    "expected_sources": [
+      "sample_audit(2).csv"
+    ]
+  },
+  {
+    "id": "Q11",
+    "question": "Who is the CEO of the company?",
+    "expected_answer": "NOT_FOUND",
+    "expected_keywords": [],
+    "answerable": false,
+    "expected_sources": []
+  },
+  {
+    "id": "Q12",
+    "question": "What is the company's annual revenue?",
+    "expected_answer": "NOT_FOUND",
+    "expected_keywords": [],
+    "answerable": false,
+    "expected_sources": []
+  },
+  {
+    "id": "Q13",
+    "question": "Where is the company headquarters?",
+    "expected_answer": "NOT_FOUND",
+    "expected_keywords": [],
+    "answerable": false,
+    "expected_sources": []
+  },
+  {
+    "id": "Q14",
+    "question": "What is Server A's IP address?",
+    "expected_answer": "NOT_FOUND",
+    "expected_keywords": [],
+    "answerable": false,
+    "expected_sources": []
+  }
+]
