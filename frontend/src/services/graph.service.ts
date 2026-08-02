@@ -9,64 +9,13 @@ export const graphService = {
       const response = await apiClient.get<ApiResponse<GraphData>>('/graph');
       return response.data;
     } catch {
-      // Fallback: return baseline graph nodes if graph endpoint is unpopulated
+      // Fallback: return empty graph if graph endpoint is unpopulated or errors
       return {
         success: true,
         message: 'Loaded Knowledge Graph Nodes',
         data: {
-          nodes: [
-            {
-              id: 'node-1',
-              label: 'GDPR Article 32',
-              name: 'GDPR Article 32',
-              type: 'Regulation',
-              description: 'Technical and organizational security measures requirement.',
-            },
-            {
-              id: 'node-2',
-              label: 'Customer Data Bucket',
-              name: 'Customer Data Bucket',
-              type: 'Storage',
-              description: 'AWS S3 Bucket storing PII customer records.',
-            },
-            {
-              id: 'node-3',
-              label: 'Payment Gateway App',
-              name: 'Payment Gateway App',
-              type: 'Application',
-              description: 'Core microservice for handling PCI-DSS transactions.',
-            },
-            {
-              id: 'node-4',
-              label: 'Unencrypted Storage Risk',
-              name: 'Unencrypted Storage Risk',
-              type: 'Compliance Rule',
-              description: 'Violation of encryption-at-rest policy.',
-            },
-          ],
-          edges: [
-            {
-              source: 'node-1',
-              target: 'node-2',
-              type: 'GOVERNS',
-              relationship_type: 'GOVERNS',
-              confidence: 0.96,
-            },
-            {
-              source: 'node-3',
-              target: 'node-2',
-              type: 'STORES',
-              relationship_type: 'STORES',
-              confidence: 0.92,
-            },
-            {
-              source: 'node-4',
-              target: 'node-2',
-              type: 'VIOLATES',
-              relationship_type: 'VIOLATES',
-              confidence: 0.88,
-            },
-          ],
+          nodes: [],
+          edges: [],
         },
       };
     }
@@ -82,11 +31,17 @@ export const graphService = {
         success: true,
         message: 'Graph Stats',
         data: {
-          entity_count: 4,
-          relationship_count: 3,
-          chunk_count: 12,
+          entity_count: 0,
+          relationship_count: 0,
+          chunk_count: 0,
         },
       };
     }
+  },
+
+  /** Reset / Clear all knowledge graph data */
+  async resetGraph(): Promise<ApiResponse<{ cleared: boolean }>> {
+    const response = await apiClient.delete<ApiResponse<{ cleared: boolean }>>('/graph');
+    return response.data;
   },
 };

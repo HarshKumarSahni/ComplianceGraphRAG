@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ReactFlow,
   Controls,
@@ -25,6 +25,7 @@ import {
   Info,
   Database,
   Search,
+  Trash2,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
@@ -34,6 +35,7 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { Skeleton } from '@/components/ui/Loader';
 import { graphService } from '@/services/graph.service';
 import { GraphNode, GraphEdge } from '@/types/graph';
+import { useToast } from '@/hooks/useToast';
 
 // Colors mapped by node entity type
 const nodeColorMap: Record<string, { bg: string; border: string; text: string }> = {
@@ -51,11 +53,33 @@ export default function GraphPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch Graph Data
   const { data: graphResponse, isLoading, refetch } = useQuery({
     queryKey: ['graph-data'],
     queryFn: () => graphService.getGraph(),
+  });
+
+  const clearGraphMutation = useMutation({
+    mutationFn: () => graphService.resetGraph(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['graph-data'] });
+      queryClient.invalidateQueries({ queryKey: ['graph-stats'] });
+      toast({
+        type: 'success',
+        title: 'Knowledge Graph Cleared',
+        description: 'All nodes and relationships have been reset.',
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        type: 'error',
+        title: 'Failed to Clear Graph',
+        description: err.message || 'Could not reset Knowledge Graph.',
+      });
+    },
   });
 
   const rawNodes: GraphNode[] = graphResponse?.data?.nodes || [];
@@ -160,6 +184,18 @@ export default function GraphPage() {
           badge={`${rawNodes.length} Nodes | ${rawEdges.length} Edges`}
           action={
             <div className="flex items-center gap-2">
+              {rawNodes.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-red-500/30 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  onClick={() => clearGraphMutation.mutate()}
+                  disabled={clearGraphMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Clear Graph Data
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => refetch()}>
                 <RotateCcw className="w-4 h-4 mr-1.5" />
                 Reset View

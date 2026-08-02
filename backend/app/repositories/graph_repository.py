@@ -20,6 +20,10 @@ class IGraphRepository(ABC):
     async def get_graph(self) -> Dict[str, Any]:
         pass
 
+    @abstractmethod
+    async def clear_graph(self) -> bool:
+        pass
+
 
 class GraphRepository(IGraphRepository):
     def __init__(self, neo4j_client):
@@ -116,27 +120,46 @@ class GraphRepository(IGraphRepository):
 
         return True
 
-    async def get_graph(self) -> Dict[str, Any]:
-        """Retrieve all entity nodes and relationships for visual graph display."""
+    async def get_graph(self, user_id: str = None) -> Dict[str, Any]:
+        """Retrieve entity nodes and relationships filtered by user_id if provided."""
         if not getattr(self.client, "_driver", None):
             return {"nodes": [], "edges": []}
 
-        query = """
-        MATCH (n:Entity)
-        OPTIONAL MATCH (n)-[r]->(m:Entity)
-        RETURN n.name AS source_name,
-               n.type AS source_type,
-               n.description AS source_desc,
-               m.name AS target_name,
-               m.type AS target_type,
-               m.description AS target_desc,
-               type(r) AS rel_type,
-               r.confidence AS confidence
-        LIMIT 200
-        """
+        if user_id:
+            query = """
+            MATCH (n:Entity)
+            WHERE n.user_id = $user_id OR n.user_id IS NULL
+            OPTIONAL MATCH (n)-[r]->(m:Entity)
+            WHERE m.user_id = $user_id OR m.user_id IS NULL
+            RETURN n.name AS source_name,
+                   n.type AS source_type,
+                   n.description AS source_desc,
+                   m.name AS target_name,
+                   m.type AS target_type,
+                   m.description AS target_desc,
+                   type(r) AS rel_type,
+                   r.confidence AS confidence
+            LIMIT 200
+            """
+            params = {"user_id": user_id}
+        else:
+            query = """
+            MATCH (n:Entity)
+            OPTIONAL MATCH (n)-[r]->(m:Entity)
+            RETURN n.name AS source_name,
+                   n.type AS source_type,
+                   n.description AS source_desc,
+                   m.name AS target_name,
+                   m.type AS target_type,
+                   m.description AS target_desc,
+                   type(r) AS rel_type,
+                   r.confidence AS confidence
+            LIMIT 200
+            """
+            params = {}
 
         try:
-            records = self.client.execute_read(query)
+            records = self.client.execute_read(query, params)
             nodes_dict = {}
             edges_list = []
 
@@ -177,3 +200,23 @@ class GraphRepository(IGraphRepository):
         except Exception as e:
             logger.error(f"Failed to fetch graph from Neo4j: {e}")
             return {"nodes": [], "edges": []}
+
+    async def clear_graph(self, user_id: str = None) -> bool:
+        """Delete Entity, Chunk nodes and relationships from Neo4j (filtered by user_id if provided)."""
+        if not getattr(self.client, "_driver", None):
+            return True
+
+        if user_id:
+            query = "MATCH (n) WHERE n.user_id = $user_id OR n.user_id IS NULL DETACH DELETE n"
+            params = {"user_id": user_id}
+        else:
+            query = "MATCH (n) DETACH DELETE n"
+            params = {}
+
+        try:
+            self.client.execute_write(query, params)
+            logger.info("Cleared nodes and relationships from Neo4j Knowledge Graph.")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to clear Neo4j graph: {e}")
+            return False

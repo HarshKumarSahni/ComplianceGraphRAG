@@ -53,6 +53,16 @@ async def get_graph_stats(graph_repo: GraphRepository = Depends(get_graph_repo))
     )
 
 
+@router.delete("", response_model=ApiResponse[dict], status_code=status.HTTP_200_OK)
+async def clear_graph(graph_repo: GraphRepository = Depends(get_graph_repo)):
+    cleared = await graph_repo.clear_graph()
+    return ApiResponse(
+        success=cleared,
+        message="Knowledge Graph reset successfully" if cleared else "Failed to reset Knowledge Graph",
+        data={"cleared": cleared}
+    )
+
+
 @router.post("/build/{document_id}", response_model=ApiResponse[ExtractionPipelineResult], status_code=status.HTTP_200_OK)
 async def build_graph_for_document(
     document_id: str,

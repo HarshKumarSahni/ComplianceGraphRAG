@@ -68,6 +68,8 @@ export default function UploadPage() {
 
             setActiveStep(4);
             setProcessingStage(`Graph indexing complete for ${item.filename}!`);
+            queryClient.invalidateQueries({ queryKey: ['graph-data'] });
+            queryClient.invalidateQueries({ queryKey: ['graph-stats'] });
           } catch (e) {
             console.warn(`Ingestion pipeline notice for ${docId}:`, e);
           }
@@ -88,6 +90,7 @@ export default function UploadPage() {
       setActiveStep(0);
       setProcessingStage('');
       queryClient.invalidateQueries({ queryKey: ['documents-list'] });
+      queryClient.invalidateQueries({ queryKey: ['graph-data'] });
       queryClient.invalidateQueries({ queryKey: ['graph-stats'] });
     },
     onError: (err: any) => {
