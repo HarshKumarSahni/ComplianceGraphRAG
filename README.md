@@ -9,6 +9,13 @@
 > **GraphGuard AI** is a production-grade enterprise platform that synthesizes heterogeneous compliance documents—**PDF policies, CSV asset inventories, and MP3 audit recordings**—into a unified, queryable **Neo4j Knowledge Graph**. It enables grounded, natural language compliance query answering powered by **GraphRAG** with strict citation traceability and zero hallucination.
 ---
 
+## 🌐 Website & Demo
+
+- **🌍 Live Website:** [GraphGuard AI](https://compliance-graph-rag.vercel.app/)
+- **🎥 Demo Video & Resources:** [Google Drive](https://drive.google.com/drive/folders/1LGP_0rx8xZLNk7KQHQNHfOCGmWib7Fd8)
+
+---
+
 ## 🚀 Key Features
 
 - **Multi-Modal Document Processing**: Ingests PDFs, CSVs, and MP3 audio files with automated text extraction and speech transcription.
@@ -23,31 +30,43 @@
 
 ## 📊 Evaluation & Benchmark Performance
 
-GraphGuard AI was evaluated using a private automated benchmark suite designed around the official challenge metrics: **Retrieval Precision, Entity Extraction F1, Hallucination Containment, and Citation Traceability**. The complete GraphRAG pipeline was tested on a compliance knowledge base consisting of PDF policies and CSV audit logs using **Top-3 evidence retrieval (`top_k = 3`)**. The benchmark included **14 evaluation queries** (10 answerable compliance questions and 4 out-of-domain questions). :contentReference[oaicite:0]{index=0}
+GraphGuard AI was evaluated using a private automated evaluation pipeline over a compliance knowledge base containing PDF policies and CSV audit logs. The system was tested using **Top-3 evidence retrieval (`top_k = 3`)** across **14 evaluation queries**, consisting of **10 answerable compliance questions** and **4 unsupported (out-of-domain) questions**. The benchmark measures retrieval quality, knowledge graph extraction accuracy, citation grounding, hallucination resistance, and end-to-end response quality. :contentReference[oaicite:0]{index=0}
 
 ### Official Performance Metrics
 
-| Metric | Score | Target | Status |
-|---------|:-----:|:------:|--------|
-| **Retrieval Precision@3** | **85.00%** | ≥ 75% | ✅ Exceeds Target |
-| **Entity Extraction F1** | **92.86%** | ≥ 80% | ✅ Exceeds Target |
-| **Hallucination Containment** | **100.00%** | 100% | ✅ Perfect |
-| **Citation Traceability** | **100.00%** | 100% | ✅ Perfect |
-| **Answer Match Rate** | **100.00%** | ≥ 90% | ✅ Perfect |
-| **Average Query Latency** | **10.84 sec** | < 15 sec | ✅ Optimized |
+| Metric | Score |
+|---------|:-----:|
+| **Retrieval Precision@3** | **85.00%** |
+| **Entity Extraction F1** | **92.86%** |
+| **Hallucination Containment** | **100.00%** |
+| **Citation Traceability** | **100.00%** |
+| **Answer Match Rate** | **100.00%** |
+| **Average Query Latency** | **10.84 sec** |
 
 ---
 
 ### Benchmark Highlights
 
-- ✅ **100% Answer Match Rate** across all **10 answerable compliance questions**, correctly identifying entities, controls, audit findings, compliance risks, remediation steps, and responsible teams.
-- ✅ **100% Hallucination Containment**, correctly refusing all **4 unsupported/out-of-domain questions** without generating fabricated information.
-- ✅ **100% Citation Traceability**, with every generated answer linked back to the original compliance documents used during retrieval.
-- ✅ **92.86% Entity Extraction F1**, demonstrating high-quality knowledge graph construction with **100% Recall** and **86.67% Precision**.
-- ✅ **85% Retrieval Precision@3**, showing highly relevant evidence retrieval while minimizing noisy context.
-- ⚡ **10.84-second average end-to-end latency**, including GraphRAG retrieval, Neo4j traversal, and LLM response generation.
+- **Retrieval Precision@3:** Achieved **85.00%**, with highly relevant Top-3 evidence retrieved for answerable compliance queries. Most questions achieved perfect retrieval precision, with only a few partial matches reducing the overall average. :contentReference[oaicite:1]{index=1}
+- **Entity Extraction:** Achieved an **F1 score of 92.86%**, with **100% Recall** and **86.67% Precision**, correctly extracting all expected entities while introducing only two false-positive entities. :contentReference[oaicite:2]{index=2}
+- **Answer Accuracy:** All **10 answerable questions** produced responses containing every expected keyword and matched the ground-truth answers, resulting in a **100% Answer Match Rate**. :contentReference[oaicite:3]{index=3}
+- **Hallucination Containment:** All **4 unsupported questions** were correctly refused with the response *"The available evidence does not contain sufficient information to answer this question."*, yielding **100% Hallucination Containment**. :contentReference[oaicite:4]{index=4}
+- **Citation Traceability:** Every answerable response included citations that could be traced back to the original compliance documents, resulting in **100% Citation Traceability**. :contentReference[oaicite:5]{index=5}
+- **System Performance:** The complete GraphRAG pipeline—including retrieval, knowledge graph traversal, and answer generation—achieved an average end-to-end latency of **10.84 seconds** across all evaluation queries. :contentReference[oaicite:6]{index=6}
 
 ---
+
+### Evaluation Summary
+
+The evaluation demonstrates that GraphGuard AI successfully delivers:
+
+- 🎯 High-accuracy GraphRAG retrieval over heterogeneous compliance documents.
+- 🕸️ Reliable entity and relationship extraction for Knowledge Graph construction.
+- 📚 Fully grounded, citation-backed responses.
+- 🛡️ Zero hallucinations on unsupported queries.
+- ⚡ Consistent end-to-end response generation with an average latency of **10.84 seconds**.
+
+These results validate GraphGuard AI as a trustworthy, explainable, and enterprise-ready compliance assistant capable of answering complex compliance queries while maintaining complete traceability to the original source documents.
 
 ### Evaluation Summary
 
@@ -233,6 +252,34 @@ npm run dev
 ```
 - Access the web interface at: `http://localhost:3000`
 
+## 📂 Sample Dataset
+
+To help you get started quickly, GraphGuard AI includes a small sample compliance dataset located in the `backend/data/` directory.
+
+These files can be uploaded directly through the web interface to test the complete pipeline—from document ingestion and knowledge graph construction to GraphRAG-based question answering.
+
+```text
+backend/data/
+├── sample3.pdf
+├── sample_audit.csv
+└── sample_policy.pdf
+```
+
+### Sample Files
+
+- **`sample3.pdf`** – Sample Encryption Remediation Policy containing compliance rules, remediation procedures, and risk classifications.
+- **`sample_audit.csv`** – Sample audit records with systems, controls, encryption status, and audit outcomes.
+- **`sample_policy.pdf`** – Sample Data Protection Policy defining customer data handling requirements, encryption controls, and team responsibilities.
+
+After uploading these files, GraphGuard AI will automatically:
+
+- 📄 Parse and preprocess the documents
+- 🧠 Extract entities and relationships
+- 🕸️ Build the Neo4j Knowledge Graph
+- 🤖 Enable GraphRAG-powered compliance question answering with source citations
+
+These sample documents are the same dataset used for the benchmark evaluation included in this repository.
+
 ---
 
 ## 🧪 Running Private Evaluation Suite
@@ -272,22 +319,6 @@ python3 GraphGuard_Evaluation_Top3/evaluate.py
 | `/api/v1/graph` | `DELETE` | Yes | Reset user's Knowledge Graph data |
 
 ---
-
-## 🌐 Production Deployment Guide
-
-### Deploying Backend to Render
-1. Create a **Web Service** on [Render](https://render.com/).
-2. Set Root Directory to `backend`.
-3. Build Command: `pip install -r requirements.txt`.
-4. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-5. Health Check Path: `/api/v1/health`.
-6. Add environment variables (`NEO4J_URI`, `OPENROUTER_API_KEY`, `CLOUDINARY_*`, `SECRET_KEY`).
-
-### Deploying Frontend to Vercel
-1. Import repository on [Vercel](https://vercel.com/).
-2. Set Root Directory to `frontend`.
-3. Add Environment Variable:
-   `NEXT_PUBLIC_API_URL` = `https://your-backend.onrender.com/api/v1`
 
 ---
 
